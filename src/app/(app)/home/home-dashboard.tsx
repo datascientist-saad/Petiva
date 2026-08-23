@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Activity,
   FileText,
   MessageCircle,
   Pill,
@@ -11,7 +10,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PetSelector } from "@/components/layout/pet-selector";
+import { PetSelector } from "@/components/pets/pet-selector";
 import { AddMedicationDialog } from "@/components/forms/add-medication-dialog";
 import { AddRecordDialog } from "@/components/forms/add-record-dialog";
 import { AddWeightDialog } from "@/components/forms/add-weight-dialog";

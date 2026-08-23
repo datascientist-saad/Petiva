@@ -97,3 +97,6 @@ export function usePet() {
   if (!ctx) throw new Error("usePet must be used within PetProvider");
   return ctx;
 }
+
+// Alias for components using the hook naming convention
+export const useSelectedPet = usePet;
