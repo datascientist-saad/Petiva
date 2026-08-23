@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { AddRecordDialog } from "@/components/forms/add-record-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState, LoadingState } from "@/components/shared/page-states";
 import { usePet } from "@/contexts/pet-context";
 import { createClient } from "@/lib/supabase/client";

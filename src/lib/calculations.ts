@@ -169,7 +169,6 @@ export function weightDifference(records: WeightRecord[]): {
   );
   const current = Number(sorted[sorted.length - 1].weight_kg);
   const previous = sorted.length > 1 ? Number(sorted[sorted.length - 2].weight_kg) : null;
-  const first = Number(sorted[0].weight_kg);
   const overDays =
     sorted.length > 1
       ? differenceInDays(new Date(sorted[sorted.length - 1].recorded_at), new Date(sorted[0].recorded_at))

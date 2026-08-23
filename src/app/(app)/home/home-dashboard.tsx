@@ -10,7 +10,6 @@ import {
   Utensils,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PetSelector } from "@/components/pets/pet-selector";
 import { AddMedicationDialog } from "@/components/forms/add-medication-dialog";
 import { AddRecordDialog } from "@/components/forms/add-record-dialog";
 import { AddWeightDialog } from "@/components/forms/add-weight-dialog";
@@ -24,6 +23,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/shared/page-s
 import { usePet } from "@/contexts/pet-context";
 import { useUser } from "@/contexts/user-context";
 import {
+  calculatePetAge,
   daysUntilVaccination,
   getTodaysCareTasks,
   isVaccinationDueSoon,
@@ -129,13 +129,32 @@ export function HomeDashboard() {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{greetingForNow(firstName)}</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-tight">
+            {greetingForNow(firstName)} 👋
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Here's how {selectedPet.name} is doing today.
+            Here&apos;s how {selectedPet.name} is doing today.
           </p>
         </div>
-        <PetSelector />
       </div>
+
+      <Card className="rounded-2xl border-border/60 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="text-3xl">{selectedPet.species === "dog" ? "🐶" : "🐱"}</div>
+          <div>
+            <p className="font-semibold">{selectedPet.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {[
+                selectedPet.breed,
+                calculatePetAge(selectedPet).label,
+                selectedPet.weight_kg != null ? `${selectedPet.weight_kg} kg` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
+        </div>
+      </Card>
 
       <Card className="rounded-2xl border-none bg-primary text-primary-foreground shadow-md">
         <CardHeader className="pb-2">

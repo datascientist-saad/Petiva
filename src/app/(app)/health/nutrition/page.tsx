@@ -12,7 +12,7 @@ import { usePet } from "@/contexts/pet-context";
 import { foodConsumedToday, remainingFoodTarget } from "@/lib/calculations";
 import { createClient } from "@/lib/supabase/client";
 import { toUserMessage } from "@/lib/errors";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatTime } from "@/lib/utils";
 import { NutritionService } from "@/services/nutrition-service";
 import type { MealLog } from "@/types/database";
 
