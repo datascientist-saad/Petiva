@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { signUpSchema } from "@/lib/validations";
 
@@ -71,7 +73,13 @@ export default function SignupPage() {
         <CardTitle className="font-display text-2xl">Create your account</CardTitle>
         <CardDescription>Start caring for your pets with Pawly</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <GoogleSignInButton nextPath="/onboarding" label="Sign up with Google" />
+        <div className="flex items-center gap-3">
+          <Separator className="flex-1" />
+          <span className="text-xs text-muted-foreground">or email</span>
+          <Separator className="flex-1" />
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full name</Label>
@@ -115,7 +123,7 @@ export default function SignupPage() {
             {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-2 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-primary hover:underline">
             Sign in

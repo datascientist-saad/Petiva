@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -112,6 +113,26 @@ export default function ProfilePage() {
               </Link>
             ))
           )}
+          <Button asChild variant="secondary" className="mt-2 w-full rounded-xl">
+            <Link href="/onboarding?new=1">Add another pet</Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base">Session</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Signed in as {profile?.email}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild variant="secondary" className="rounded-xl">
+              <Link href="/settings">Open settings</Link>
+            </Button>
+            <SignOutButton />
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -7,8 +7,10 @@ import {
   HeartPulse,
   Home,
   ListChecks,
+  Settings,
   UserRound,
 } from "lucide-react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +74,21 @@ export function AppShell({ children, petSelector }: AppShellProps) {
               <NavLink key={item.href} {...item} active={isActive(item.href)} />
             ))}
           </nav>
+          <div className="mt-auto space-y-2 border-t border-border pt-4">
+            <Link
+              href="/settings"
+              className={cn(
+                "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors",
+                isActive("/settings")
+                  ? "bg-primary/12 text-primary"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              )}
+            >
+              <Settings className="size-5" />
+              Settings
+            </Link>
+            <SignOutButton variant="ghost" fullWidth className="justify-start" />
+          </div>
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col">

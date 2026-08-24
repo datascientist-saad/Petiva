@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -75,22 +76,26 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       toast.success("Invite sent! Share the link with your caregiver.");
+      if (data.inviteUrl) {
+        try {
+          await navigator.clipboard.writeText(data.inviteUrl);
+          toast.message("Invite link copied to clipboard.");
+        } catch {
+          // ignore clipboard failures
+        }
+      }
       setInviteEmail("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't send invite.");
     }
   }
 
-  async function signOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
   async function deleteAccount() {
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
       for (const pet of pets.filter((p) => p.role === "owner")) {
         await supabase.from("pets").delete().eq("id", pet.id);
@@ -98,6 +103,7 @@ export default function SettingsPage() {
       await supabase.auth.signOut();
       toast.success("Account deleted. We're sorry to see you go.");
       router.push("/");
+      router.refresh();
     } catch (err) {
       toast.error(toUserMessage(err));
     }
@@ -121,15 +127,19 @@ export default function SettingsPage() {
       </div>
 
       <Card className="rounded-2xl">
-        <CardHeader><CardTitle className="text-base">Account</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
+        <CardHeader>
+          <CardTitle className="text-base">Account</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <p className="text-sm">{profile?.email}</p>
-          <Button variant="outline" onClick={signOut} className="rounded-xl">Sign out</Button>
+          <SignOutButton fullWidth className="sm:w-auto" />
         </CardContent>
       </Card>
 
       <Card className="rounded-2xl">
-        <CardHeader><CardTitle className="text-base">Notifications</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Notifications</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
           {prefItems.map(({ key, label }) => (
             <div key={key} className="flex items-center justify-between">
@@ -149,19 +159,30 @@ export default function SettingsPage() {
 
       {pets.some((p) => p.role === "owner") && (
         <Card className="rounded-2xl">
-          <CardHeader><CardTitle className="text-base">Invite a caregiver</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base">Invite a caregiver</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="caregiver@email.com" className="rounded-xl" />
+              <Input
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="caregiver@email.com"
+                className="rounded-xl"
+              />
             </div>
-            <Button onClick={sendInvite} className="rounded-xl">Send invite</Button>
+            <Button onClick={sendInvite} className="rounded-xl">
+              Send invite
+            </Button>
           </CardContent>
         </Card>
       )}
 
       <Card className="rounded-2xl border-destructive/30">
-        <CardHeader><CardTitle className="text-base text-destructive">Danger zone</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base text-destructive">Danger zone</CardTitle>
+        </CardHeader>
         <CardContent>
           <p className="mb-3 text-sm text-muted-foreground">
             Permanently delete your account and all pet data. This cannot be undone.
@@ -182,7 +203,10 @@ export default function SettingsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteAccount} className="rounded-xl bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={deleteAccount}
+              className="rounded-xl bg-destructive text-destructive-foreground"
+            >
               Yes, delete everything
             </AlertDialogAction>
           </AlertDialogFooter>
