@@ -1,14 +1,14 @@
 /**
- * Global branding configuration for Pawly.
+ * Global branding configuration for Petiva.
  * Change app name, tagline, and colors here — components consume these tokens.
  */
 export const brand = {
-  name: "Pawly",
-  logoText: "🐾 Pawly",
+  name: "Petiva",
+  logoText: "🐾 Petiva",
   tagline: "Your pet’s health, all in one place.",
   subtitle:
-    "Track care, vaccinations, meals, medications and health records — and get personalized help from Pawly AI.",
-  supportEmail: "hello@pawly.app",
+    "Track care, vaccinations, meals, medications and health records — and get personalized help from Petiva AI.",
+  supportEmail: "hello@petiva.app",
   colors: {
     primary: "#6B8F71",
     primaryForeground: "#FFFFFF",

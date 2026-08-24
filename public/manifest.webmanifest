@@ -1,24 +1,21 @@
 {
-  "name": "Pawly",
-  "short_name": "Pawly",
+  "name": "Petiva",
+  "short_name": "Petiva",
   "description": "Your pet's health, all in one place.",
-  "start_url": "/home",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#FAF7F2",
   "theme_color": "#6B8F71",
-  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }

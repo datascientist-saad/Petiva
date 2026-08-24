@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 
 const resetPasswordSchema = z
@@ -90,7 +91,7 @@ export default function ResetPasswordPage() {
     <Card className="rounded-3xl border-border shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="font-display text-2xl">Set a new password</CardTitle>
-        <CardDescription>Choose a strong password for your Pawly account</CardDescription>
+        <CardDescription>Choose a strong password for your {brand.name} account</CardDescription>
       </CardHeader>
       <CardContent>
         {!ready ? (

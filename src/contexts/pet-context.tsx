@@ -26,7 +26,8 @@ interface PetContextValue {
 
 const PetContext = createContext<PetContextValue | null>(null);
 
-const STORAGE_KEY = "pawly_selected_pet";
+const STORAGE_KEY = "petiva_selected_pet";
+const LEGACY_STORAGE_KEY = "pawly_selected_pet";
 
 export function PetProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
@@ -50,11 +51,17 @@ export function PetProvider({ children }: { children: ReactNode }) {
       }
       const list = await petService.listForUser(user.id);
       setPets(list);
-      const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+      const stored =
+        typeof window !== "undefined"
+          ? localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
+          : null;
       const validStored = list.find((p) => p.id === stored);
       const nextId = validStored?.id ?? list[0]?.id ?? null;
       setSelectedPetIdState(nextId);
-      if (nextId) localStorage.setItem(STORAGE_KEY, nextId);
+      if (nextId) {
+        localStorage.setItem(STORAGE_KEY, nextId);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+      }
     } catch (err) {
       setError(toUserMessage(err, "Couldn't load your pets right now."));
     } finally {

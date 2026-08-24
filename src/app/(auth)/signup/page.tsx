@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import { signUpSchema } from "@/lib/validations";
 
@@ -52,7 +53,7 @@ export default function SignupPage() {
       if (error) throw error;
 
       if (data.session) {
-        toast.success("Welcome to Pawly!");
+        toast.success(`Welcome to ${brand.name}!`);
         router.replace("/onboarding");
         router.refresh();
         return;
@@ -71,7 +72,7 @@ export default function SignupPage() {
     <Card className="rounded-3xl border-border shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="font-display text-2xl">Create your account</CardTitle>
-        <CardDescription>Start caring for your pets with Pawly</CardDescription>
+        <CardDescription>Start caring for your pets with {brand.name}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <GoogleSignInButton nextPath="/onboarding" label="Sign up with Google" />

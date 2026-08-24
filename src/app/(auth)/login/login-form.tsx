@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema } from "@/lib/validations";
 import { PetService } from "@/services/pet-service";
@@ -74,7 +75,7 @@ export default function LoginForm() {
     <Card className="rounded-3xl border-border shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="font-display text-2xl">Sign in</CardTitle>
-        <CardDescription>Welcome back to Pawly</CardDescription>
+        <CardDescription>Welcome back to {brand.name}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <GoogleSignInButton nextPath={next} />
@@ -119,7 +120,7 @@ export default function LoginForm() {
           </Button>
         </form>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          New to Pawly?{" "}
+          New to {brand.name}?{" "}
           <Link href="/signup" className="font-medium text-primary hover:underline">
             Create an account
           </Link>

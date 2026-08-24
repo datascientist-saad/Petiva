@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { brand } from "@/lib/brand";
 import {
   FileText,
   MessageCircle,
@@ -268,7 +269,7 @@ export function HomeDashboard() {
             <MessageCircle className="h-6 w-6" />
           </div>
           <div className="flex-1">
-            <p className="font-medium">Ask Pawly AI</p>
+            <p className="font-medium">Ask {brand.name} AI</p>
             <p className="text-sm text-muted-foreground">
               Wondering about {selectedPet.name}'s care? I'm here to help.
             </p>

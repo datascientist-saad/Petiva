@@ -1,5 +1,6 @@
 import { Logo } from "@/components/brand/logo";
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
       <footer className="border-t border-border px-4 py-10 md:px-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <Logo />
-          <p>© {new Date().getFullYear()} Pawly. Made with care for pets and their people.</p>
+          <p>© {new Date().getFullYear()} {brand.name}. Made with care for pets and their people.</p>
         </div>
       </footer>
     </div>

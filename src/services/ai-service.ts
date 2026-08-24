@@ -1,10 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
+import { brand } from "@/lib/brand";
 import { AppError } from "@/lib/errors";
 import { calculatePetAge, getActiveMedications } from "@/lib/calculations";
 import type { Allergy, Condition, Medication, Pet, Symptom, Vaccination } from "@/types/database";
 
-const SYSTEM_PROMPT = `You are Pawly AI, a pet-care information assistant.
+const SYSTEM_PROMPT = `You are ${brand.name} AI, a pet-care information assistant.
 
 You have access to the pet profile supplied in context.
 Use that information to make answers relevant.
@@ -21,7 +22,7 @@ Make a distinction between:
 * potentially urgent
 Always explain why.
 
-Always remind users that Pawly AI provides general pet-care information and does not replace a veterinarian.
+Always remind users that ${brand.name} AI provides general pet-care information and does not replace a veterinarian.
 Never claim to diagnose conditions.
 Do not provide medication dosages unless the medication information came directly from a veterinarian-recorded prescription in the provided context.`;
 
@@ -92,7 +93,7 @@ function answerFromData(message: string, ctx: PetAiContext): string | null {
 
   if (/weight/.test(q) && /(chang|current|how much|what)/.test(q)) {
     return ctx.pet.weight_kg != null
-      ? `${ctx.pet.name}'s most recently recorded weight is ${ctx.pet.weight_kg} kg. Weight changes can have many causes — track trends and talk with your veterinarian if you notice sudden shifts. Pawly AI provides general information and does not replace veterinary care.`
+      ? `${ctx.pet.name}'s most recently recorded weight is ${ctx.pet.weight_kg} kg. Weight changes can have many causes — track trends and talk with your veterinarian if you notice sudden shifts. ${brand.name} AI provides general information and does not replace veterinary care.`
       : `I don't see a weight recorded for ${ctx.pet.name} yet. You can add one from Health → Weight.`;
   }
 
@@ -105,7 +106,7 @@ function answerFromData(message: string, ctx: PetAiContext): string | null {
     }
     return `${ctx.pet.name}'s next recorded vaccination is ${upcoming.name}${
       upcoming.next_due_date ? ` on ${upcoming.next_due_date}` : ""
-    }. This is based on what you've logged in Pawly — confirm timing with your veterinarian.`;
+    }. This is based on what you've logged in ${brand.name} — confirm timing with your veterinarian.`;
   }
 
   if (/vaccin/.test(q) && /(recorded|have|list|what)/.test(q)) {
@@ -154,7 +155,7 @@ function fallbackResponse(message: string, ctx: PetAiContext): string {
       ctx.pet.species
     }${ctx.pet.breed ? ` (${ctx.pet.breed})` : ""}.` +
     `\n\nI can help with general care guidance using the information you've recorded — weight, vaccines, medications, meals, and symptoms.` +
-    `\n\nPawly AI provides general pet-care information and does not replace a veterinarian. If ${ctx.pet.name} seems unwell, contact your vet.` +
+    `\n\n${brand.name} AI provides general pet-care information and does not replace a veterinarian. If ${ctx.pet.name} seems unwell, contact your vet.` +
     `\n\nCould you share a bit more detail about what you'd like help with?`
   );
 }

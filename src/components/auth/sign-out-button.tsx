@@ -28,6 +28,7 @@ export function SignOutButton({
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       try {
+        localStorage.removeItem("petiva_selected_pet");
         localStorage.removeItem("pawly_selected_pet");
       } catch {
         // ignore

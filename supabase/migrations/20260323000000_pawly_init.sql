@@ -1,4 +1,4 @@
--- Pawly MVP schema with RLS
+-- Petiva MVP schema with RLS
 -- Apply via: supabase db push / migration up / SQL editor
 
 create extension if not exists "pgcrypto";

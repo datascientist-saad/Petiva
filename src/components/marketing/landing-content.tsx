@@ -30,7 +30,7 @@ const features = [
   },
   {
     title: "AI Pet Assistant",
-    description: "Ask Pawly AI questions grounded in your pet’s real health profile.",
+    description: `Ask ${brand.name} AI questions grounded in your pet’s real health profile.`,
     icon: Bot,
   },
   {
@@ -97,7 +97,7 @@ export function LandingContent() {
                   </div>
                 </div>
                 <div className="rounded-2xl bg-primary/10 p-4">
-                  <p className="text-sm font-medium text-primary">Pawly AI</p>
+                  <p className="text-sm font-medium text-primary">{brand.name} AI</p>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                     &ldquo;Luna&apos;s meal log looks balanced this week. Consider a hydration check-in.&rdquo;
                   </p>

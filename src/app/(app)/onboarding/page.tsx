@@ -210,7 +210,7 @@ export default function OnboardingPage() {
           const url = await uploadPhoto(user.id, pet.id, data.photoFile);
           await petService.update(pet.id, { profile_image_url: url });
         } catch (photoError) {
-          console.warn("[Pawly:onboarding] Photo upload failed", photoError);
+          console.warn("[Petiva:onboarding] Photo upload failed", photoError);
           toast.message("Profile saved — photo upload can be added later from Settings.");
         }
       }
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
       await analytics.track("pet_created", user.id, pet.id, { species: pet.species });
       await analytics.track("care_task_created", user.id, pet.id, { source: "default_plan" });
 
-      localStorage.setItem("pawly_selected_pet", pet.id);
+      localStorage.setItem("petiva_selected_pet", pet.id);
       await refreshPets();
       toast.success(`${pet.name} is ready! 🎉`);
       router.replace("/home");

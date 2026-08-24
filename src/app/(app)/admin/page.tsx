@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { brand } from "@/lib/brand";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingState, ErrorState } from "@/components/shared/page-states";
 
@@ -103,7 +104,7 @@ export default function AdminPage() {
     <div className="space-y-6 animate-fade-up">
       <div>
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold">Pilot dashboard</h1>
-        <p className="text-sm text-muted-foreground">Aggregate usage for the Pawly pilot — no private medical details.</p>
+        <p className="text-sm text-muted-foreground">Aggregate usage for the {brand.name} pilot — no private medical details.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">

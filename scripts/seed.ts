@@ -3,14 +3,14 @@
  *
  * Usage:
  *   SUPABASE_SERVICE_ROLE_KEY=... NEXT_PUBLIC_SUPABASE_URL=... \
- *   SEED_EMAIL=demo@pawly.app SEED_PASSWORD=demo-demo-demo \
+ *   SEED_EMAIL=demo@petiva.app SEED_PASSWORD=demo-demo-demo \
  *   npm run seed
  */
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const email = process.env.SEED_EMAIL ?? "demo@pawly.app";
+const email = process.env.SEED_EMAIL ?? "demo@petiva.app";
 const password = process.env.SEED_PASSWORD ?? "demo-demo-demo";
 
 if (!url || !serviceKey) {
@@ -23,7 +23,7 @@ const admin = createClient(url, serviceKey, {
 });
 
 async function main() {
-  console.log("Seeding Pawly demo data…");
+  console.log("Seeding Petiva demo data…");
 
   const existing = await admin.auth.admin.listUsers({ perPage: 200 });
   let userId = existing.data.users.find((u) => u.email === email)?.id;

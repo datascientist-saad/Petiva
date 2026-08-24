@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState, LoadingState } from "@/components/shared/page-states";
+import { brand } from "@/lib/brand";
 import { usePet } from "@/contexts/pet-context";
 
 interface Message {
@@ -67,7 +68,7 @@ export default function AiPage() {
   if (petLoading) return <LoadingState message="Loading AI assistant…" />;
 
   if (!selectedPet) {
-    return <EmptyState title="Add a pet first" description="Pawly AI needs a pet profile to give helpful answers." />;
+    return <EmptyState title="Add a pet first" description={`${brand.name} AI needs a pet profile to give helpful answers.`} />;
   }
 
   return (
@@ -76,7 +77,7 @@ export default function AiPage() {
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-accent" />
-            Pawly AI
+            {brand.name} AI
           </h1>
           <p className="text-sm text-muted-foreground">Ask about {selectedPet.name}'s care</p>
         </div>
@@ -85,7 +86,7 @@ export default function AiPage() {
 
       <Card className="rounded-2xl border-warning/30 bg-warning/10">
         <CardContent className="p-3 text-xs text-muted-foreground">
-          Pawly AI shares general pet-care information and does not replace your veterinarian. For emergencies, contact a vet immediately.
+          {brand.name} AI shares general pet-care information and does not replace your veterinarian. For emergencies, contact a vet immediately.
         </CardContent>
       </Card>
 

@@ -1,8 +1,8 @@
-# Pawly 🐾
+# Petiva 🐾
 
 Your pet’s health, all in one place.
 
-Pawly is a mobile-first pet health and care companion for cats and dogs. Pet parents create a profile once, then track meals, weight, vaccinations, medications, care tasks, medical records, and get contextual help from Pawly AI.
+Petiva is a mobile-first pet health and care companion for cats and dogs. Pet parents create a profile once, then track meals, weight, vaccinations, medications, care tasks, medical records, and get contextual help from Petiva AI.
 
 This repository is a production-quality MVP intended for a small real-user pilot (≈5–10 people).
 
@@ -118,7 +118,7 @@ npm run build
 ### Seed demo data (dev only)
 
 ```bash
-SEED_EMAIL=demo@pawly.app SEED_PASSWORD=demo-demo-demo npm run seed
+SEED_EMAIL=demo@petiva.app SEED_PASSWORD=demo-demo-demo npm run seed
 ```
 
 Creates Demo Owner with Luna (cat) and Bruno (dog), plus sample weights, vaccines, meals, tasks, and notifications.
@@ -165,7 +165,7 @@ Manual pilot checklist (must work end-to-end against a real Supabase project):
 6. Add medication → health section
 7. Create + complete care task → weekly % changes
 8. Upload medical record → timeline
-9. Ask Pawly AI (selected pet context)
+9. Ask Petiva AI (selected pet context)
 10. Log out / log in → data persists
 11. Second user cannot access first user’s pets
 
