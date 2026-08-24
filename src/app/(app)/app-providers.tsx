@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { PetSelector } from "@/components/pets/pet-selector";
+import { MissingConfigScreen, hasSupabaseConfig } from "@/components/shared/missing-config";
 import { PetProvider, usePet } from "@/contexts/pet-context";
 import { UserProvider } from "@/contexts/user-context";
 import { LoadingState } from "@/components/shared/page-states";
@@ -33,6 +34,10 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
 }
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
+  if (!hasSupabaseConfig()) {
+    return <MissingConfigScreen />;
+  }
+
   return (
     <UserProvider>
       <PetProvider>
