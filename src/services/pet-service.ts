@@ -55,8 +55,24 @@ export class PetService {
   }
 
   async create(input: Partial<Pet> & { name: string; species: string; owner_id: string }) {
-    const { data, error } = await this.supabase.from("pets").insert(input).select("*").single();
+    const { error } = await this.supabase.from("pets").insert(input);
     if (error) throw new AppError(`Something went wrong while creating ${input.name}'s profile.`, { cause: error });
+
+    const { data, error: fetchError } = await this.supabase
+      .from("pets")
+      .select("*")
+      .eq("owner_id", input.owner_id)
+      .eq("name", input.name)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (fetchError || !data) {
+      throw new AppError(`Something went wrong while creating ${input.name}'s profile.`, {
+        cause: fetchError ?? new Error("Pet was created but could not be loaded."),
+      });
+    }
+
     return data as Pet;
   }
 

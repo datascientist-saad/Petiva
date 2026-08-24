@@ -12,8 +12,23 @@ export class AppError extends Error {
   }
 }
 
+function supabaseErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+  const record = error as { message?: string; code?: string; cause?: unknown };
+  if (record.code === "42501") {
+    return "You don't have permission to save this. Try signing out and back in.";
+  }
+  if (typeof record.message === "string" && record.message.length > 0) {
+    return record.message;
+  }
+  if (record.cause) return supabaseErrorMessage(record.cause);
+  return null;
+}
+
 export function toUserMessage(error: unknown, fallback = "Something went wrong. Please try again."): string {
   if (error instanceof AppError) return error.message;
+  const supabaseMessage = supabaseErrorMessage(error);
+  if (supabaseMessage) return supabaseMessage;
   if (process.env.NODE_ENV === "development") {
     console.error("[Pawly]", error);
   }

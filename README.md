@@ -88,10 +88,14 @@ Every pet-scoped table checks `user_has_pet_access(pet_id)` or owner helpers. Ch
 
 ## OpenAI setup
 
-1. Create an API key at OpenAI.
-2. Set `OPENAI_API_KEY` in `.env.local` / Vercel.
-3. Without the key, `/api/ai/chat` still answers factual questions from the pet database context and returns safe educational fallbacks.
-4. Daily limit defaults to 20 messages/user (`AI_DAILY_MESSAGE_LIMIT`).
+Care plan creation works **without** OpenAI. The key only powers live AI chat answers in `/ai`.
+
+1. Create an API key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+2. Add it as `OPENAI_API_KEY`:
+   - **Local:** paste into `.env.local` (copy from `.env.example`), then restart `npm run dev`.
+   - **Production (Vercel):** open your project → **Settings** → **Environment Variables** → add `OPENAI_API_KEY` with your `sk-...` key for **Production** and **Preview** → **Redeploy** the latest deployment.
+3. Optional: set `AI_DAILY_MESSAGE_LIMIT` (default `20`) in the same places.
+4. Without the key, `/api/ai/chat` still answers factual questions from the pet database context and returns safe educational fallbacks.
 
 ## Local development
 

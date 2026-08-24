@@ -162,6 +162,19 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Please sign in to continue.");
 
+      const { error: profileError } = await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          email: user.email ?? null,
+          full_name:
+            (user.user_metadata?.full_name as string | undefined) ??
+            user.email?.split("@")[0] ??
+            "Pet parent",
+        },
+        { onConflict: "id" }
+      );
+      if (profileError) throw profileError;
+
       const petService = new PetService(supabase);
       const careService = new CareTaskService(supabase);
       const vaxService = new VaccinationService(supabase);
@@ -193,8 +206,13 @@ export default function OnboardingPage() {
       });
 
       if (data.photoFile) {
-        const url = await uploadPhoto(user.id, pet.id, data.photoFile);
-        await petService.update(pet.id, { profile_image_url: url });
+        try {
+          const url = await uploadPhoto(user.id, pet.id, data.photoFile);
+          await petService.update(pet.id, { profile_image_url: url });
+        } catch (photoError) {
+          console.warn("[Pawly:onboarding] Photo upload failed", photoError);
+          toast.message("Profile saved — photo upload can be added later from Settings.");
+        }
       }
 
       if (data.weight_kg) {
