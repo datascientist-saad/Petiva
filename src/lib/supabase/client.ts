@@ -1,8 +1,11 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { supabasePublicDefaults } from "@/lib/supabase/public-config";
 
 export function getSupabasePublicConfig() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? "";
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || supabasePublicDefaults.url).trim();
+  const key = (
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || supabasePublicDefaults.anonKey
+  ).trim();
   return { url, key, isConfigured: Boolean(url && key) };
 }
 
