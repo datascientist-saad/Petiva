@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { toUserMessage } from "@/lib/errors";
 import { z } from "zod";
+import { createServiceClient } from "@/lib/supabase/admin";
+import { toUserMessage } from "@/lib/errors";
+import { createClient } from "@/lib/supabase/server";
 
 const acceptSchema = z.object({
   token: z.string().min(1),
@@ -24,42 +25,76 @@ export async function POST(request: Request) {
     }
 
     const { token } = parsed.data;
+    const admin = createServiceClient();
 
-    const { data: invite, error: findError } = await supabase
+    const { data: invite, error: findError } = await admin
       .from("pet_access")
-      .select("*, pets(name)")
+      .select("id, pet_id, invited_email, accepted_at, pets(name)")
       .eq("invite_token", token)
-      .is("accepted_at", null)
       .maybeSingle();
 
     if (findError) throw findError;
-    if (!invite) {
+    if (!invite || invite.accepted_at) {
       return NextResponse.json({ error: "This invite is invalid or has already been used." }, { status: 404 });
     }
 
-    if (invite.invited_email && invite.invited_email !== user.email) {
+    const invitedEmail = invite.invited_email?.trim().toLowerCase();
+    const userEmail = user.email?.trim().toLowerCase();
+
+    if (invitedEmail && userEmail && invitedEmail !== userEmail) {
       return NextResponse.json(
-        { error: "This invite was sent to a different email address." },
+        { error: "This invite was sent to a different email address. Sign in with the invited email." },
         { status: 403 }
       );
     }
 
-    const { error: updateError } = await supabase
+    const { data: existingAccess } = await admin
+      .from("pet_access")
+      .select("id")
+      .eq("pet_id", invite.pet_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingAccess) {
+      await admin
+        .from("pet_access")
+        .update({
+          role: "caregiver",
+          accepted_at: new Date().toISOString(),
+          invite_token: null,
+          invited_email: invitedEmail ?? userEmail ?? null,
+        })
+        .eq("id", existingAccess.id);
+
+      const pets = invite.pets as { name: string } | { name: string }[] | null;
+      const petName = Array.isArray(pets) ? pets[0]?.name : pets?.name;
+
+      return NextResponse.json({
+        success: true,
+        petId: invite.pet_id,
+        petName: petName ?? "the pet",
+      });
+    }
+
+    const { error: updateError } = await admin
       .from("pet_access")
       .update({
         user_id: user.id,
         accepted_at: new Date().toISOString(),
+        invite_token: null,
+        invited_email: invitedEmail ?? userEmail ?? null,
       })
       .eq("id", invite.id);
 
     if (updateError) throw updateError;
 
-    const petName = (invite.pets as { name: string } | null)?.name ?? "the pet";
+    const pets = invite.pets as { name: string } | { name: string }[] | null;
+    const petName = Array.isArray(pets) ? pets[0]?.name : pets?.name;
 
     return NextResponse.json({
       success: true,
       petId: invite.pet_id,
-      petName,
+      petName: petName ?? "the pet",
     });
   } catch (error) {
     return NextResponse.json({ error: toUserMessage(error) }, { status: 500 });

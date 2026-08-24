@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolvePostAuthPath } from "@/lib/auth-redirect";
 import { createClient } from "@/lib/supabase/server";
 import { PetService } from "@/services/pet-service";
 
@@ -16,17 +17,23 @@ export async function GET(request: Request) {
         data: { user },
       } = await supabase.auth.getUser();
 
-      let destination = nextParam || "/home";
+      let hasNoPets = false;
+      let hasIncompleteOnboarding = false;
+
       if (user) {
         try {
           const pets = await new PetService(supabase).listForUser(user.id);
-          if (pets.length === 0) {
-            destination = "/onboarding";
-          }
+          hasNoPets = pets.length === 0;
+          hasIncompleteOnboarding = pets.some((pet) => !pet.onboarding_completed);
         } catch {
           // keep requested destination
         }
       }
+
+      const destination = resolvePostAuthPath(nextParam, {
+        hasNoPets,
+        hasIncompleteOnboarding,
+      });
 
       return NextResponse.redirect(`${origin}${destination}`);
     }

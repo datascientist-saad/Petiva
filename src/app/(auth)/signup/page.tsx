@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
@@ -10,12 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { resolvePostAuthPath } from "@/lib/auth-redirect";
 import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import { signUpSchema } from "@/lib/validations";
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/onboarding";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +49,7 @@ export default function SignupPage() {
         password: parsed.data.password,
         options: {
           data: { full_name: parsed.data.fullName },
-          emailRedirectTo: `${origin}/auth/callback?next=/onboarding`,
+          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
 
@@ -54,7 +57,7 @@ export default function SignupPage() {
 
       if (data.session) {
         toast.success(`Welcome to ${brand.name}!`);
-        router.replace("/onboarding");
+        router.replace(resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true }));
         router.refresh();
         return;
       }
@@ -75,7 +78,7 @@ export default function SignupPage() {
         <CardDescription>Start caring for your pets with {brand.name}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <GoogleSignInButton nextPath="/onboarding" label="Sign up with Google" />
+        <GoogleSignInButton nextPath={next} label="Sign up with Google" />
         <div className="flex items-center gap-3">
           <Separator className="flex-1" />
           <span className="text-xs text-muted-foreground">or email</span>
@@ -126,7 +129,10 @@ export default function SignupPage() {
         </form>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link
+            href={next.startsWith("/invite/") ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+            className="font-medium text-primary hover:underline"
+          >
             Sign in
           </Link>
         </p>

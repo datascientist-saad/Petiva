@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { resolvePostAuthPath } from "@/lib/auth-redirect";
 import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema } from "@/lib/validations";
@@ -53,10 +54,10 @@ export default function LoginForm() {
 
       if (user) {
         const pets = await new PetService(supabase).listForUser(user.id);
-        const destination =
-          pets.length === 0 || pets.some((pet) => !pet.onboarding_completed)
-            ? "/onboarding"
-            : next;
+        const destination = resolvePostAuthPath(next, {
+          hasNoPets: pets.length === 0,
+          hasIncompleteOnboarding: pets.some((pet) => !pet.onboarding_completed),
+        });
         router.replace(destination);
         router.refresh();
         return;
@@ -121,7 +122,7 @@ export default function LoginForm() {
         </form>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           New to {brand.name}?{" "}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link href={next.startsWith("/invite/") ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} className="font-medium text-primary hover:underline">
             Create an account
           </Link>
         </p>

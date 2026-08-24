@@ -1,13 +1,21 @@
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { createServiceClient } from "@/lib/supabase/admin";
 import { toUserMessage } from "@/lib/errors";
 import { inviteSchema } from "@/lib/validations";
-import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 const createInviteSchema = inviteSchema.extend({
   petId: z.string().uuid(),
 });
+
+function appBaseUrl() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  );
+}
 
 export async function POST(request: Request) {
   try {
@@ -32,22 +40,62 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "You can only invite caregivers to your own pets." }, { status: 403 });
     }
 
+    const admin = createServiceClient();
+    const normalizedEmail = email.trim().toLowerCase();
     const token = randomBytes(24).toString("hex");
-    const { data, error } = await supabase
+
+    const { data: existing } = await admin
+      .from("pet_access")
+      .select("id, accepted_at")
+      .eq("pet_id", petId)
+      .eq("invited_email", normalizedEmail)
+      .eq("role", "caregiver")
+      .maybeSingle();
+
+    if (existing?.accepted_at) {
+      return NextResponse.json(
+        { error: "This person is already a caregiver for this pet." },
+        { status: 409 }
+      );
+    }
+
+    if (existing) {
+      const { data: updated, error: updateError } = await admin
+        .from("pet_access")
+        .update({
+          invite_token: token,
+          accepted_at: null,
+          user_id: null,
+        })
+        .eq("id", existing.id)
+        .select("id")
+        .single();
+
+      if (updateError) throw updateError;
+
+      const inviteUrl = `${appBaseUrl()}/invite/${token}`;
+      return NextResponse.json({
+        id: updated.id,
+        inviteUrl,
+        token,
+        petName: pet.name,
+      });
+    }
+
+    const { data, error } = await admin
       .from("pet_access")
       .insert({
         pet_id: petId,
         role,
-        invited_email: email,
+        invited_email: normalizedEmail,
         invite_token: token,
       })
-      .select("*")
+      .select("id")
       .single();
 
     if (error) throw error;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const inviteUrl = `${appUrl}/invite/${token}`;
+    const inviteUrl = `${appBaseUrl()}/invite/${token}`;
 
     return NextResponse.json({
       id: data.id,

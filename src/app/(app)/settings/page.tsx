@@ -19,6 +19,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LoadingState } from "@/components/shared/page-states";
 import { usePet } from "@/contexts/pet-context";
 import { useUser } from "@/contexts/user-context";
@@ -163,6 +170,25 @@ export default function SettingsPage() {
             <CardTitle className="text-base">Invite a caregiver</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {pets.filter((p) => p.role === "owner").length > 1 ? (
+              <div className="space-y-2">
+                <Label>Pet</Label>
+                <Select value={invitePetId} onValueChange={setInvitePetId}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Select a pet" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pets
+                      .filter((p) => p.role === "owner")
+                      .map((pet) => (
+                        <SelectItem key={pet.id} value={pet.id}>
+                          {pet.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label>Email</Label>
               <Input
