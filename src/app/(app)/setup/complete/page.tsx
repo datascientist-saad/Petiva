@@ -8,7 +8,6 @@ import { usePet } from "@/contexts/pet-context";
 import { createClient } from "@/lib/supabase/client";
 import { toUserMessage } from "@/lib/errors";
 import {
-  clearOnboardingDraft,
   loadOnboardingDraft,
   markOnboardingTransferred,
   wasOnboardingTransferred,
@@ -45,7 +44,7 @@ export default function SetupCompletePage() {
           return;
         }
 
-        const { petId, petName } = await transferOnboardingDraft(supabase, user.id, draft);
+        const { petId, petName } = await transferOnboardingDraft(supabase, user, draft);
         markOnboardingTransferred();
         localStorage.setItem("petiva_selected_pet", petId);
         await refreshPets();
@@ -55,8 +54,7 @@ export default function SetupCompletePage() {
       } catch (err) {
         setMessage(toUserMessage(err, "Something went wrong while saving your pet."));
         toast.error(toUserMessage(err));
-        clearOnboardingDraft();
-        setTimeout(() => router.replace("/onboarding"), 2500);
+        setTimeout(() => router.replace("/home"), 3500);
       }
     }
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertBanner } from "@/components/shared/alert-banner";
 import { SegmentedSelector } from "@/components/shared/segmented-selector";
@@ -40,6 +40,61 @@ import {
 const STEPS = ["Welcome", "Pet basics", "Body & lifestyle", "Diet", "Preview"];
 const TOTAL_STEPS = 5;
 
+function stepKey(index: number): OnboardingDraftData["step"] {
+  return STEPS[index].toLowerCase().replace(/ & /g, "_").replace(/ /g, "_") as OnboardingDraftData["step"];
+}
+
+function validateStepData(current: OnboardingDraftData, currentStep: number): boolean {
+  if (currentStep === 1) {
+    if (!current.name.trim()) {
+      toast.error("What's your pet's name?");
+      return false;
+    }
+  }
+  if (currentStep === 2) {
+    if (!current.weight_value || Number(current.weight_value) <= 0) {
+      toast.error("Please enter your pet's weight.");
+      return false;
+    }
+    if (!current.activity_level) {
+      toast.error("Select an activity level.");
+      return false;
+    }
+    if (!current.body_condition) {
+      toast.error("Select a body condition.");
+      return false;
+    }
+  }
+  if (currentStep === 3) {
+    if (!current.food_type) {
+      toast.error("Select a food type.");
+      return false;
+    }
+    if (!current.diet_goal) {
+      toast.error("Select a diet goal.");
+      return false;
+    }
+    if (current.food_type === "mixed") {
+      const dry = Number(current.mixed_dry_percent) || 0;
+      const wet = 100 - dry;
+      if (!validateMixedFeedingPercent(dry, wet)) {
+        toast.error("Dry and wet percentages must add up to 100%.");
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function withStepMeta(next: OnboardingDraftData, nextStep: number): OnboardingDraftData {
+  return {
+    ...next,
+    stepIndex: nextStep,
+    step: stepKey(nextStep),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 export function PreSignupWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -51,16 +106,6 @@ export function PreSignupWizard() {
       setData(saved);
       setStep(saved.stepIndex ?? 0);
     }
-  }, []);
-
-  const persist = useCallback((next: OnboardingDraftData, nextStep: number) => {
-    const draft = {
-      ...next,
-      stepIndex: nextStep,
-      step: STEPS[nextStep].toLowerCase().replace(/ & /g, "_").replace(/ /g, "_") as OnboardingDraftData["step"],
-    };
-    setData(draft);
-    saveOnboardingDraft(draft);
   }, []);
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
@@ -75,66 +120,36 @@ export function PreSignupWizard() {
   });
 
   function update(patch: Partial<OnboardingDraftData>) {
-    persist({ ...data, ...patch }, step);
-  }
-
-  function validateStep(): boolean {
-    if (step === 1) {
-      if (!data.name.trim()) {
-        toast.error("What's your pet's name?");
-        return false;
-      }
-    }
-    if (step === 2) {
-      if (!data.weight_value || Number(data.weight_value) <= 0) {
-        toast.error("Please enter your pet's weight.");
-        return false;
-      }
-      if (!data.activity_level) {
-        toast.error("Select an activity level.");
-        return false;
-      }
-      if (!data.body_condition) {
-        toast.error("Select a body condition.");
-        return false;
-      }
-    }
-    if (step === 3) {
-      if (!data.food_type) {
-        toast.error("Select a food type.");
-        return false;
-      }
-      if (!data.diet_goal) {
-        toast.error("Select a diet goal.");
-        return false;
-      }
-      if (data.food_type === "mixed") {
-        const dry = Number(data.mixed_dry_percent) || 0;
-        const wet = 100 - dry;
-        if (!validateMixedFeedingPercent(dry, wet)) {
-          toast.error("Dry and wet percentages must add up to 100%.");
-          return false;
-        }
-      }
-    }
-    return true;
+    setData((current) => {
+      const draft = withStepMeta({ ...current, ...patch }, step);
+      saveOnboardingDraft(draft);
+      return draft;
+    });
   }
 
   function next() {
-    if (!validateStep()) return;
-    const nextStep = Math.min(step + 1, TOTAL_STEPS - 1);
-    if (nextStep === TOTAL_STEPS - 1) {
-      const dietPreview = buildDietPreviewFromDraft(data);
-      persist({ ...data, diet_preview: dietPreview }, nextStep);
-    } else {
-      persist(data, nextStep);
-    }
-    setStep(nextStep);
+    setData((current) => {
+      if (!validateStepData(current, step)) return current;
+
+      const nextStep = Math.min(step + 1, TOTAL_STEPS - 1);
+      const nextData =
+        nextStep === TOTAL_STEPS - 1
+          ? { ...current, diet_preview: buildDietPreviewFromDraft(current) }
+          : current;
+      const draft = withStepMeta(nextData, nextStep);
+      saveOnboardingDraft(draft);
+      setStep(nextStep);
+      return draft;
+    });
   }
 
   function back() {
     const prev = Math.max(step - 1, 0);
-    persist(data, prev);
+    setData((current) => {
+      const draft = withStepMeta(current, prev);
+      saveOnboardingDraft(draft);
+      return draft;
+    });
     setStep(prev);
   }
 
@@ -146,8 +161,15 @@ export function PreSignupWizard() {
   }
 
   function goToSignup() {
-    saveOnboardingDraft({ ...data, diet_preview: preview, stepIndex: step });
-    router.push("/signup");
+    setData((current) => {
+      const draft = withStepMeta(
+        { ...current, diet_preview: buildDietPreviewFromDraft(current) },
+        step
+      );
+      saveOnboardingDraft(draft);
+      router.push("/signup");
+      return draft;
+    });
   }
 
   const loginHref = "/login?next=%2Fsetup%2Fcomplete";
