@@ -2,6 +2,15 @@ import { describe, expect, it } from "vitest";
 import { resolvePostAuthPath } from "./auth-redirect";
 
 describe("resolvePostAuthPath", () => {
+  it("prioritizes setup complete over onboarding", () => {
+    expect(
+      resolvePostAuthPath("/setup/complete", {
+        hasNoPets: true,
+        hasIncompleteOnboarding: true,
+      })
+    ).toBe("/setup/complete");
+  });
+
   it("prioritizes invite links over onboarding", () => {
     expect(
       resolvePostAuthPath("/invite/abc123", {

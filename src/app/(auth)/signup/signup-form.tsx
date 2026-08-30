@@ -18,7 +18,10 @@ import { signUpSchema } from "@/lib/validations";
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/onboarding";
+  const fromGetStarted = searchParams.get("from") === "get-started";
+  const next = fromGetStarted
+    ? "/setup/complete"
+    : searchParams.get("next") ?? "/onboarding";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,7 +60,7 @@ export default function SignupForm() {
 
       if (data.session) {
         toast.success(`Welcome to ${brand.name}!`);
-        router.replace(resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true }));
+        router.replace(fromGetStarted ? "/setup/complete" : resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true }));
         router.refresh();
         return;
       }

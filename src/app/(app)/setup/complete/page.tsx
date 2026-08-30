@@ -1,0 +1,61 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { LoadingState } from "@/components/shared/page-states";
+import { createClient } from "@/lib/supabase/client";
+import { toUserMessage } from "@/lib/errors";
+import {
+  clearOnboardingDraft,
+  loadOnboardingDraft,
+  markOnboardingTransferred,
+  wasOnboardingTransferred,
+} from "@/lib/onboarding-draft";
+import { transferOnboardingDraft } from "@/lib/onboarding-transfer";
+
+export default function SetupCompletePage() {
+  const router = useRouter();
+  const [message, setMessage] = useState("Saving your pet's plan…");
+
+  useEffect(() => {
+    async function run() {
+      if (wasOnboardingTransferred()) {
+        router.replace("/home");
+        return;
+      }
+
+      const draft = loadOnboardingDraft();
+      if (!draft || !draft.name.trim()) {
+        router.replace("/onboarding");
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          router.replace("/login?next=/setup/complete");
+          return;
+        }
+
+        const { petId, petName } = await transferOnboardingDraft(supabase, user.id, draft);
+        markOnboardingTransferred();
+        localStorage.setItem("petiva_selected_pet", petId);
+        toast.success(`${petName} is ready! 🎉`);
+        router.replace("/home");
+      } catch (err) {
+        setMessage(toUserMessage(err, "Something went wrong while saving your pet."));
+        toast.error(toUserMessage(err));
+        clearOnboardingDraft();
+        setTimeout(() => router.replace("/onboarding"), 2500);
+      }
+    }
+
+    void run();
+  }, [router]);
+
+  return <LoadingState message={message} />;
+}

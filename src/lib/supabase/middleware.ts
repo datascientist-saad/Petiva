@@ -39,6 +39,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/reset-password");
   const isPublic =
     pathname === "/" ||
+    pathname.startsWith("/get-started") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
     pathname.startsWith("/ai-disclaimer") ||
@@ -53,6 +54,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/profile") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/setup") ||
     pathname.startsWith("/pets") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/notifications");

@@ -63,7 +63,7 @@ export function LandingContent() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="rounded-full px-8">
-                <Link href="/signup">Get Started</Link>
+                <Link href="/get-started">Get Started</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full px-8">
                 <Link href="/login">Sign In</Link>
@@ -148,7 +148,7 @@ export function LandingContent() {
             Create your free account and set up your first pet in minutes.
           </p>
           <Button asChild size="lg" className="rounded-full px-10">
-            <Link href="/signup">Get Started — it&apos;s free</Link>
+            <Link href="/get-started">Get Started — it&apos;s free</Link>
           </Button>
         </div>
       </section>

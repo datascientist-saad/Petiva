@@ -23,6 +23,9 @@
   --radius: 1rem;
   --success: #5a8f6b;
   --warning: #d4a373;
+  --surface: #ffffff;
+  --shadow-soft: 0 1px 3px rgb(44 42 38 / 0.06), 0 8px 24px rgb(44 42 38 / 0.04);
+  --spacing-page: 1.25rem;
 }
 
 @theme inline {
@@ -47,6 +50,8 @@
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-surface: var(--surface);
+  --shadow-soft: var(--shadow-soft);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
   --radius-sm: calc(var(--radius) - 4px);
@@ -118,6 +123,23 @@ h3,
 h4,
 .font-display {
   font-family: var(--font-display), Georgia, serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-gentle-scale,
+  .animate-spin-slow {
+    animation: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+.card-surface {
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
 }
 
 :focus-visible {

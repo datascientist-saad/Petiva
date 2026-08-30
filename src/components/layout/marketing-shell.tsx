@@ -13,7 +13,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             <Link href="/login">Sign In</Link>
           </Button>
           <Button asChild className="rounded-full">
-            <Link href="/signup">Get Started</Link>
+            <Link href="/get-started">Get Started</Link>
           </Button>
         </div>
       </header>

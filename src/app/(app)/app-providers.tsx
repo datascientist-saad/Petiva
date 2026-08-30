@@ -16,7 +16,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-    const onOnboarding = pathname.startsWith("/onboarding");
+    const onOnboarding = pathname.startsWith("/onboarding") || pathname.startsWith("/setup");
     if (!pets.length && !onOnboarding) {
       router.replace("/onboarding");
     }

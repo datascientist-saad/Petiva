@@ -12,6 +12,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 
 const sections = [
+  { href: "/health/diet", label: "Diet plan", description: "Personalized feeding guidance", icon: Utensils },
   { href: "/health/weight", label: "Weight", description: "Track trends over time", icon: Scale },
   { href: "/health/vaccinations", label: "Vaccinations", description: "Due dates & history", icon: Shield },
   { href: "/health/medications", label: "Medications", description: "Active & past meds", icon: Pill },

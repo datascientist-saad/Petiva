@@ -7,10 +7,12 @@ import {
   FileText,
   MessageCircle,
   Pill,
+  Salad,
   Scale,
   Utensils,
 } from "lucide-react";
 import { toast } from "sonner";
+import { DietDashboardCard } from "@/components/diet/diet-dashboard-card";
 import { AddMedicationDialog } from "@/components/forms/add-medication-dialog";
 import { AddRecordDialog } from "@/components/forms/add-record-dialog";
 import { AddWeightDialog } from "@/components/forms/add-weight-dialog";
@@ -116,7 +118,7 @@ export function HomeDashboard() {
       <EmptyState
         title="No pets yet"
         description="Let's set up your first pet profile."
-        action={{ label: "Get started", onClick: () => (window.location.href = "/onboarding") }}
+        action={{ label: "Get started", onClick: () => (window.location.href = "/get-started") }}
       />
     );
   }
@@ -156,6 +158,8 @@ export function HomeDashboard() {
           </div>
         </div>
       </Card>
+
+      <DietDashboardCard />
 
       <Card className="rounded-2xl border-none bg-primary text-primary-foreground shadow-md">
         <CardHeader className="pb-2">
@@ -243,10 +247,16 @@ export function HomeDashboard() {
 
       <div>
         <h2 className="mb-3 text-sm font-medium text-muted-foreground">Quick actions</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Button variant="secondary" className="h-auto flex-col gap-2 rounded-2xl py-4" onClick={() => setMealOpen(true)}>
             <Utensils className="h-5 w-5 text-accent" />
             Log meal
+          </Button>
+          <Button asChild variant="secondary" className="h-auto flex-col gap-2 rounded-2xl py-4">
+            <Link href="/health/diet">
+              <Salad className="h-5 w-5 text-primary" />
+              Diet plan
+            </Link>
           </Button>
           <Button variant="secondary" className="h-auto flex-col gap-2 rounded-2xl py-4" onClick={() => setWeightOpen(true)}>
             <Scale className="h-5 w-5 text-primary" />

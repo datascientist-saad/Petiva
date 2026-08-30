@@ -9,7 +9,7 @@ export function resolvePostAuthPath(
   const fallback = "/home";
   const target = next?.trim() || fallback;
 
-  if (target.startsWith("/invite/")) {
+  if (target.startsWith("/invite/") || target === "/setup/complete") {
     return target;
   }
 

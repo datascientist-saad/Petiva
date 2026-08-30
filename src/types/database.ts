@@ -2,6 +2,10 @@ export type Species = "cat" | "dog";
 export type Sex = "male" | "female";
 export type NeuteredStatus = "yes" | "no" | "unknown";
 export type ActivityLevel = "low" | "moderate" | "high";
+export type ExtendedActivityLevel = "low" | "moderate" | "active" | "very_active";
+export type BodyCondition = "underweight" | "ideal" | "overweight" | "unsure";
+export type DietGoal = "maintain" | "lose" | "gain" | "improve";
+export type WeightUnit = "kg" | "lb";
 export type FoodType = "dry" | "wet" | "mixed" | "raw" | "other";
 export type FoodUnit = "grams" | "cans" | "portions";
 export type PetAccessRole = "owner" | "caregiver";
@@ -56,6 +60,15 @@ export interface Pet {
   estimated_age_months: number | null;
   sex: Sex | null;
   weight_kg: number | null;
+  weight_unit: WeightUnit;
+  body_condition: BodyCondition | null;
+  diet_goal: DietGoal | null;
+  calories_per_100g: number | null;
+  calories_per_serving: number | null;
+  foods_to_avoid: string | null;
+  vet_diet_notes: string | null;
+  mixed_feeding_dry_percent: number | null;
+  activity_level_extended: ExtendedActivityLevel | null;
   neutered: NeuteredStatus;
   activity_level: ActivityLevel | null;
   profile_image_url: string | null;
@@ -203,6 +216,33 @@ export interface Symptom {
   image_url: string | null;
   created_by: string | null;
   created_at: string;
+}
+
+export interface DailyFeedingCompletion {
+  id: string;
+  pet_id: string;
+  completed_by: string | null;
+  meal_index: number;
+  scheduled_time: string | null;
+  completion_date: string;
+  completed_at: string;
+}
+
+export interface DietPlan {
+  id: string;
+  pet_id: string;
+  created_by: string | null;
+  version: number;
+  is_current: boolean;
+  inputs: Record<string, unknown>;
+  result: Record<string, unknown>;
+  vet_approved: boolean;
+  vet_notes: string | null;
+  owner_notes: string | null;
+  generated_at: string;
+  review_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AppNotification {
