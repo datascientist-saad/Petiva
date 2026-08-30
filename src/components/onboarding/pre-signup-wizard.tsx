@@ -155,7 +155,8 @@ export function PreSignupWizard() {
   return (
     <div
       className={cn(
-        "mx-auto max-w-lg animate-fade-up px-3 py-4 sm:px-4 sm:py-6",
+        "mx-auto flex w-full max-w-lg flex-1 flex-col animate-fade-up px-3 sm:px-4",
+        step === 0 ? "justify-center py-6 sm:py-8" : "py-4 sm:py-6",
         showStickyNav && "pb-24",
       )}
     >
@@ -175,22 +176,42 @@ export function PreSignupWizard() {
 
       {step === 0 && (
         <Card className="rounded-3xl border-border/70 shadow-md">
-          <CardHeader className="px-4 pt-5 text-center sm:px-6 sm:pt-6">
-            <CardTitle className="font-display text-2xl sm:text-3xl">Better care starts with knowing your pet</CardTitle>
+          <CardHeader className="space-y-4 px-5 pt-6 text-center sm:px-8 sm:pt-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-3xl">
+              🐾
+            </div>
+            <CardTitle className="font-display text-2xl leading-tight sm:text-3xl">
+              Better care starts with knowing your pet
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6 px-4 pb-5 text-center sm:px-6 sm:pb-6">
-            <p className="text-muted-foreground leading-relaxed">
-              {brand.name} helps you track meals, health, and care — with a personalized diet plan built from your
-              pet&apos;s profile.
+          <CardContent className="space-y-6 px-5 pb-6 text-center sm:px-8 sm:pb-8">
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {brand.tagline} Build a personalized diet plan and keep vaccinations, meals, and health records in one
+              place.
             </p>
+            <ul className="space-y-2.5 rounded-2xl bg-secondary/50 p-4 text-left text-sm text-muted-foreground">
+              <li className="flex items-start gap-2.5">
+                <span aria-hidden className="mt-0.5 text-primary">✓</span>
+                <span>Personalized diet plan in under 5 minutes</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span aria-hidden className="mt-0.5 text-primary">✓</span>
+                <span>Track meals, meds, and vet visits</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span aria-hidden className="mt-0.5 text-primary">✓</span>
+                <span>AI guidance tailored to your pet</span>
+              </li>
+            </ul>
             <div className="space-y-3">
-              <Button onClick={next} className="w-full rounded-2xl" size="lg">
+              <Button onClick={next} className="h-12 w-full rounded-2xl text-base" size="lg">
                 Create my pet&apos;s plan
               </Button>
-              <Button asChild variant="outline" className="w-full rounded-2xl">
+              <Button asChild variant="outline" className="h-12 w-full rounded-2xl text-base">
                 <Link href="/login">I already have an account</Link>
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">Free to start · No credit card required</p>
           </CardContent>
         </Card>
       )}
