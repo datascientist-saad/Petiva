@@ -99,6 +99,9 @@ export default function PetDetailPage() {
           </h1>
           <p className="text-sm text-muted-foreground">{age.label} old</p>
         </div>
+        <Button asChild variant="outline" size="sm" className="rounded-xl">
+          <Link href="/health/diet">Diet plan</Link>
+        </Button>
       </div>
 
       <form onSubmit={handleSave} className="space-y-4">
