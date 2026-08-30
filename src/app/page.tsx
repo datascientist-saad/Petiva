@@ -3,7 +3,7 @@ import { PreSignupWizard } from "@/components/onboarding/pre-signup-wizard";
 
 export default function HomePage() {
   return (
-    <MarketingShell>
+    <MarketingShell variant="onboarding">
       <PreSignupWizard />
     </MarketingShell>
   );

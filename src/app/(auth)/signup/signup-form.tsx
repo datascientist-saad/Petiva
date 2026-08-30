@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,13 @@ export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchNext = searchParams.get("next");
-  const hasDraft = typeof window !== "undefined" && hasOnboardingDraft();
-  const next = searchNext ?? (hasDraft ? "/setup/complete" : "/onboarding");
+  const [next, setNext] = useState(searchNext ?? "/onboarding");
+
+  useEffect(() => {
+    if (!searchNext && hasOnboardingDraft()) {
+      setNext("/setup/complete");
+    }
+  }, [searchNext]);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

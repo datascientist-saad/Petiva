@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Logo } from "@/components/brand/logo";
 import { AlertBanner } from "@/components/shared/alert-banner";
 import { SegmentedSelector } from "@/components/shared/segmented-selector";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { brand } from "@/lib/brand";
 import { breedsForSpecies } from "@/lib/breeds";
 import { calculatePetAge, speciesEmoji } from "@/lib/calculations";
+import { cn } from "@/lib/utils";
 import { validateMixedFeedingPercent } from "@/lib/diet-calculations";
 import {
   buildDietPreviewFromDraft,
@@ -150,33 +150,35 @@ export function PreSignupWizard() {
     router.push("/signup");
   }
 
-  return (
-    <div className="mx-auto max-w-lg space-y-6 px-4 py-8 animate-fade-up">
-      <div className="flex items-center justify-between">
-        <Logo />
-        {step > 0 ? (
-          <Button variant="ghost" size="sm" onClick={restart} className="rounded-full text-xs">
-            Start over
-          </Button>
-        ) : null}
-      </div>
+  const showStickyNav = step > 0 && step < TOTAL_STEPS - 1;
 
+  return (
+    <div
+      className={cn(
+        "mx-auto max-w-lg animate-fade-up px-3 py-4 sm:px-4 sm:py-6",
+        showStickyNav && "pb-24",
+      )}
+    >
       {step > 0 ? (
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Step {step + 1} of {TOTAL_STEPS}</span>
-            <span>{STEPS[step]}</span>
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>
+              Step {step + 1} of {TOTAL_STEPS} · {STEPS[step]}
+            </span>
+            <Button variant="ghost" size="sm" onClick={restart} className="h-auto shrink-0 rounded-full px-2 py-1 text-xs">
+              Start over
+            </Button>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-1.5" />
         </div>
       ) : null}
 
       {step === 0 && (
         <Card className="rounded-3xl border-border/70 shadow-md">
-          <CardHeader className="text-center">
-            <CardTitle className="font-display text-3xl">Better care starts with knowing your pet</CardTitle>
+          <CardHeader className="px-4 pt-5 text-center sm:px-6 sm:pt-6">
+            <CardTitle className="font-display text-2xl sm:text-3xl">Better care starts with knowing your pet</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6 text-center">
+          <CardContent className="space-y-6 px-4 pb-5 text-center sm:px-6 sm:pb-6">
             <p className="text-muted-foreground leading-relaxed">
               {brand.name} helps you track meals, health, and care — with a personalized diet plan built from your
               pet&apos;s profile.
@@ -195,10 +197,10 @@ export function PreSignupWizard() {
 
       {step === 1 && (
         <Card className="rounded-2xl">
-          <CardHeader>
-            <CardTitle className="font-display">Tell us about your pet</CardTitle>
+          <CardHeader className="px-4 pt-5 sm:px-6 sm:pt-6">
+            <CardTitle className="font-display text-xl sm:text-2xl">Tell us about your pet</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-4 pb-5 sm:px-6 sm:pb-6">
             <div className="space-y-2">
               <Label htmlFor="pet-name">Pet name *</Label>
               <Input id="pet-name" value={data.name} onChange={(e) => update({ name: e.target.value })} className="rounded-xl" placeholder="Luna" />
@@ -263,10 +265,10 @@ export function PreSignupWizard() {
 
       {step === 2 && (
         <Card className="rounded-2xl">
-          <CardHeader>
-            <CardTitle className="font-display">Body & lifestyle</CardTitle>
+          <CardHeader className="px-4 pt-5 sm:px-6 sm:pt-6">
+            <CardTitle className="font-display text-xl sm:text-2xl">Body & lifestyle</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-4 pb-5 sm:px-6 sm:pb-6">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Weight *</Label>
@@ -331,10 +333,10 @@ export function PreSignupWizard() {
 
       {step === 3 && (
         <Card className="rounded-2xl">
-          <CardHeader>
-            <CardTitle className="font-display">Diet information</CardTitle>
+          <CardHeader className="px-4 pt-5 sm:px-6 sm:pt-6">
+            <CardTitle className="font-display text-xl sm:text-2xl">Diet information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-4 pb-5 sm:px-6 sm:pb-6">
             <div className="space-y-2">
               <Label>Current food type *</Label>
               <SegmentedSelector
@@ -440,12 +442,12 @@ export function PreSignupWizard() {
 
       {step === 4 && (
         <Card className="rounded-2xl border-primary/20 shadow-md">
-          <CardHeader>
-            <CardTitle className="font-display flex items-center gap-2">
+          <CardHeader className="px-4 pt-5 sm:px-6 sm:pt-6">
+            <CardTitle className="font-display flex items-center gap-2 text-xl sm:text-2xl">
               {speciesEmoji(data.species)} {data.name}&apos;s plan preview
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-4 pb-5 sm:px-6 sm:pb-6">
             <ul className="space-y-2 rounded-2xl bg-secondary/40 p-4 text-sm">
               <li>{data.breed || "Breed not specified"}</li>
               {summaryAge.label ? <li>{summaryAge.label} old</li> : null}
@@ -500,14 +502,22 @@ export function PreSignupWizard() {
         </Card>
       )}
 
-      {step > 0 && step < TOTAL_STEPS - 1 ? (
-        <div className="flex justify-between gap-3">
-          <Button variant="outline" onClick={back} className="rounded-xl">Back</Button>
-          <Button onClick={next} className="rounded-xl">Continue</Button>
+      {showStickyNav ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto flex max-w-lg gap-3">
+            <Button variant="outline" onClick={back} className="flex-1 rounded-xl">
+              Back
+            </Button>
+            <Button onClick={next} className="flex-1 rounded-xl">
+              Continue
+            </Button>
+          </div>
         </div>
       ) : step === TOTAL_STEPS - 1 ? (
-        <div className="flex justify-start">
-          <Button variant="outline" onClick={back} className="rounded-xl">Back</Button>
+        <div className="mt-4 flex justify-start">
+          <Button variant="outline" onClick={back} className="rounded-xl">
+            Back
+          </Button>
         </div>
       ) : null}
     </div>
