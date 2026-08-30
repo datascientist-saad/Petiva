@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/shared/page-states";
+import { usePet } from "@/contexts/pet-context";
 import { createClient } from "@/lib/supabase/client";
 import { toUserMessage } from "@/lib/errors";
 import {
@@ -16,12 +17,15 @@ import { transferOnboardingDraft } from "@/lib/onboarding-transfer";
 
 export default function SetupCompletePage() {
   const router = useRouter();
+  const { refreshPets } = usePet();
   const [message, setMessage] = useState("Saving your pet's plan…");
 
   useEffect(() => {
     async function run() {
       if (wasOnboardingTransferred()) {
+        await refreshPets();
         router.replace("/home");
+        router.refresh();
         return;
       }
 
@@ -44,8 +48,10 @@ export default function SetupCompletePage() {
         const { petId, petName } = await transferOnboardingDraft(supabase, user.id, draft);
         markOnboardingTransferred();
         localStorage.setItem("petiva_selected_pet", petId);
+        await refreshPets();
         toast.success(`${petName} is ready! 🎉`);
         router.replace("/home");
+        router.refresh();
       } catch (err) {
         setMessage(toUserMessage(err, "Something went wrong while saving your pet."));
         toast.error(toUserMessage(err));
@@ -55,7 +61,7 @@ export default function SetupCompletePage() {
     }
 
     void run();
-  }, [router]);
+  }, [refreshPets, router]);
 
   return <LoadingState message={message} />;
 }

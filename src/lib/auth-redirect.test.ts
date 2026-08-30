@@ -20,6 +20,16 @@ describe("resolvePostAuthPath", () => {
     ).toBe("/invite/abc123");
   });
 
+  it("prioritizes pending onboarding draft over onboarding", () => {
+    expect(
+      resolvePostAuthPath("/home", {
+        hasNoPets: true,
+        hasIncompleteOnboarding: true,
+        hasPendingOnboardingDraft: true,
+      })
+    ).toBe("/setup/complete");
+  });
+
   it("sends new pet owners to onboarding", () => {
     expect(
       resolvePostAuthPath("/home", {

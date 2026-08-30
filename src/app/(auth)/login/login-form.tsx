@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { resolvePostAuthPath } from "@/lib/auth-redirect";
 import { brand } from "@/lib/brand";
+import { hasOnboardingDraft } from "@/lib/onboarding-draft";
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema } from "@/lib/validations";
 import { PetService } from "@/services/pet-service";
@@ -19,7 +20,14 @@ import { PetService } from "@/services/pet-service";
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/home";
+  const searchNext = searchParams.get("next");
+  const [next, setNext] = useState(searchNext ?? "/home");
+
+  useEffect(() => {
+    if (!searchNext && hasOnboardingDraft()) {
+      setNext("/setup/complete");
+    }
+  }, [searchNext]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,6 +65,7 @@ export default function LoginForm() {
         const destination = resolvePostAuthPath(next, {
           hasNoPets: pets.length === 0,
           hasIncompleteOnboarding: pets.some((pet) => !pet.onboarding_completed),
+          hasPendingOnboardingDraft: hasOnboardingDraft(),
         });
         router.replace(destination);
         router.refresh();

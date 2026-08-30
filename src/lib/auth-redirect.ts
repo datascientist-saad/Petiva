@@ -4,10 +4,18 @@
  */
 export function resolvePostAuthPath(
   next: string | null | undefined,
-  options: { hasIncompleteOnboarding: boolean; hasNoPets: boolean }
+  options: {
+    hasIncompleteOnboarding: boolean;
+    hasNoPets: boolean;
+    hasPendingOnboardingDraft?: boolean;
+  }
 ): string {
   const fallback = "/home";
   const target = next?.trim() || fallback;
+
+  if (options.hasPendingOnboardingDraft) {
+    return "/setup/complete";
+  }
 
   if (target.startsWith("/invite/") || target === "/setup/complete") {
     return target;

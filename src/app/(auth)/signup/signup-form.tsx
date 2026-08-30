@@ -27,6 +27,9 @@ export default function SignupForm() {
       setNext("/setup/complete");
     }
   }, [searchNext]);
+
+  const loginHref =
+    next === "/setup/complete" ? "/login?next=%2Fsetup%2Fcomplete" : "/login";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,7 +68,7 @@ export default function SignupForm() {
 
       if (data.session) {
         toast.success(`Welcome to ${brand.name}!`);
-        router.replace(hasOnboardingDraft() ? "/setup/complete" : resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true }));
+        router.replace(hasOnboardingDraft() ? "/setup/complete" : resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true, hasPendingOnboardingDraft: hasOnboardingDraft() }));
         router.refresh();
         return;
       }
@@ -138,7 +141,7 @@ export default function SignupForm() {
         <p className="mt-2 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
-            href={next.startsWith("/invite/") ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+            href={next.startsWith("/invite/") ? `/login?next=${encodeURIComponent(next)}` : loginHref}
             className="font-medium text-primary hover:underline"
           >
             Sign in

@@ -8,6 +8,7 @@ import { MissingConfigScreen, hasSupabaseConfig } from "@/components/shared/miss
 import { PetProvider, usePet } from "@/contexts/pet-context";
 import { UserProvider } from "@/contexts/user-context";
 import { LoadingState } from "@/components/shared/page-states";
+import { hasOnboardingDraft } from "@/lib/onboarding-draft";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -18,11 +19,15 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     if (loading) return;
     const onOnboarding = pathname.startsWith("/onboarding") || pathname.startsWith("/setup");
     if (!pets.length && !onOnboarding) {
-      router.replace("/onboarding");
+      if (hasOnboardingDraft()) {
+        router.replace("/setup/complete");
+      } else {
+        router.replace("/onboarding");
+      }
     }
   }, [pets.length, loading, pathname, router]);
 
-  if (loading && !pathname.startsWith("/onboarding")) {
+  if (loading && !pathname.startsWith("/onboarding") && !pathname.startsWith("/setup")) {
     return (
       <AppShell petSelector={<PetSelector />}>
         <LoadingState message="Getting things ready for you and your pets…" />

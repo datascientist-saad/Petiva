@@ -73,7 +73,13 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthRoute) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/home";
+    const next = request.nextUrl.searchParams.get("next");
+    if (next?.startsWith("/invite/") || next === "/setup/complete") {
+      redirectUrl.pathname = next;
+      redirectUrl.searchParams.delete("next");
+    } else {
+      redirectUrl.pathname = "/home";
+    }
     return NextResponse.redirect(redirectUrl);
   }
 

@@ -150,6 +150,8 @@ export function PreSignupWizard() {
     router.push("/signup");
   }
 
+  const loginHref = "/login?next=%2Fsetup%2Fcomplete";
+
   const showStickyNav = step > 0 && step < TOTAL_STEPS - 1;
 
   return (
@@ -208,7 +210,7 @@ export function PreSignupWizard() {
                 Create my pet&apos;s plan
               </Button>
               <Button asChild variant="outline" className="h-12 w-full rounded-2xl text-base">
-                <Link href="/login">I already have an account</Link>
+                <Link href={loginHref}>I already have an account</Link>
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">Free to start · No credit card required</p>
