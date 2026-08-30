@@ -39,7 +39,6 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/reset-password");
   const isPublic =
     pathname === "/" ||
-    pathname.startsWith("/get-started") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
     pathname.startsWith("/ai-disclaimer") ||
@@ -58,6 +57,12 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/pets") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/notifications");
+
+  if (user && pathname === "/") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/home";
+    return NextResponse.redirect(redirectUrl);
+  }
 
   if (!user && isAppRoute) {
     const redirectUrl = request.nextUrl.clone();

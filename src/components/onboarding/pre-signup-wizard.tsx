@@ -147,7 +147,7 @@ export function PreSignupWizard() {
 
   function goToSignup() {
     saveOnboardingDraft({ ...data, diet_preview: preview, stepIndex: step });
-    router.push("/signup?from=get-started");
+    router.push("/signup");
   }
 
   return (

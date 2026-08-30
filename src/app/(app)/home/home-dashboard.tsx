@@ -118,7 +118,7 @@ export function HomeDashboard() {
       <EmptyState
         title="No pets yet"
         description="Let's set up your first pet profile."
-        action={{ label: "Get started", onClick: () => (window.location.href = "/get-started") }}
+        action={{ label: "Create your pet's plan", onClick: () => (window.location.href = "/") }}
       />
     );
   }

@@ -3,6 +3,9 @@ import { supabasePublicDefaults } from "@/lib/supabase/public-config";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [{ source: "/get-started", destination: "/", permanent: true }];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.supabase.co" },

@@ -12,9 +12,6 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
           <Button asChild variant="ghost" className="rounded-full">
             <Link href="/login">Sign In</Link>
           </Button>
-          <Button asChild className="rounded-full">
-            <Link href="/get-started">Get Started</Link>
-          </Button>
         </div>
       </header>
       <main>{children}</main>

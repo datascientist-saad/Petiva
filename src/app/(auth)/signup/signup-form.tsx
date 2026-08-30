@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { hasOnboardingDraft } from "@/lib/onboarding-draft";
 import { resolvePostAuthPath } from "@/lib/auth-redirect";
 import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
@@ -18,10 +19,9 @@ import { signUpSchema } from "@/lib/validations";
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const fromGetStarted = searchParams.get("from") === "get-started";
-  const next = fromGetStarted
-    ? "/setup/complete"
-    : searchParams.get("next") ?? "/onboarding";
+  const searchNext = searchParams.get("next");
+  const hasDraft = typeof window !== "undefined" && hasOnboardingDraft();
+  const next = searchNext ?? (hasDraft ? "/setup/complete" : "/onboarding");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,7 +60,7 @@ export default function SignupForm() {
 
       if (data.session) {
         toast.success(`Welcome to ${brand.name}!`);
-        router.replace(fromGetStarted ? "/setup/complete" : resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true }));
+        router.replace(hasOnboardingDraft() ? "/setup/complete" : resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true }));
         router.refresh();
         return;
       }
