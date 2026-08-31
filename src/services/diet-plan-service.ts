@@ -5,8 +5,10 @@ import {
   type DietCalculationInput,
   type DietCalculationResult,
 } from "@/lib/diet-calculations";
+import { calculatePetAge } from "@/lib/calculations";
 import type { BirdNutritionInput, BirdNutritionResult } from "@/lib/nutrition/bird-calculator";
 import { NUTRITION_ENGINE_VERSION } from "@/lib/nutrition/engine";
+import type { BirdSpeciesProfile } from "@/types/onboarding-draft";
 import type { DietPlan, Pet } from "@/types/database";
 
 export class DietPlanService {
@@ -54,6 +56,37 @@ export class DietPlanService {
       mixedDryPercent: pet.mixed_feeding_dry_percent,
       sex: pet.sex,
       ...extras,
+    };
+  }
+
+  buildBirdInputFromPet(pet: Pet): BirdNutritionInput | null {
+    if (pet.species !== "bird") return null;
+
+    const weightGrams =
+      pet.weight_grams != null
+        ? Number(pet.weight_grams)
+        : pet.weight_kg != null
+          ? Math.round(Number(pet.weight_kg) * 1000)
+          : null;
+    if (!weightGrams || weightGrams <= 0) return null;
+
+    const profile = (pet.species_profile ?? {}) as Partial<BirdSpeciesProfile>;
+    const activity =
+      pet.activity_level_extended ??
+      (pet.activity_level === "high" ? "active" : pet.activity_level) ??
+      "moderate";
+
+    return {
+      birdSpecies: profile.bird_species || pet.breed || "Other companion bird",
+      weightGrams,
+      ageMonths: calculatePetAge(pet).totalMonths,
+      activityLevel: activity as BirdNutritionInput["activityLevel"],
+      pelletPercentCurrent: profile.pellet_percent ? Number(profile.pellet_percent) : null,
+      seedPercentCurrent: profile.seed_percent ? Number(profile.seed_percent) : null,
+      vegetablePercentCurrent: profile.vegetable_percent ? Number(profile.vegetable_percent) : null,
+      fruitPercentCurrent: profile.fruit_percent ? Number(profile.fruit_percent) : null,
+      eggLaying: profile.egg_laying,
+      featherPluckingHistory: profile.feather_plucking_history,
     };
   }
 
