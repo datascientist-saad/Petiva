@@ -37,12 +37,14 @@ import {
   saveOnboardingDraft,
 } from "@/lib/onboarding-draft";
 import { createPetFromOnboardingDraft } from "@/lib/onboarding-transfer";
+import { uploadPetPhoto } from "@/lib/pet-photo";
 import { AnalyticsService } from "@/services/notification-service";
 import {
   HEALTH_CONDITION_OPTIONS,
   initialOnboardingDraft,
   type OnboardingDraftData,
 } from "@/types/onboarding-draft";
+import { PetPhotoPicker } from "@/components/pets/pet-photo-field";
 
 const STEPS = ["Welcome", "Pet basics", "Body & lifestyle", "Diet", "Preview"];
 const TOTAL_STEPS = 5;
@@ -123,11 +125,13 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
   const firstStep = isAuthenticatedFlow ? 1 : 0;
   const [step, setStep] = useState(firstStep);
   const [data, setData] = useState<OnboardingDraftData>(initialOnboardingDraft);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isAuthenticatedFlow) {
       setData(initialOnboardingDraft());
+      setPhotoFile(null);
       setStep(1);
       return;
     }
@@ -194,6 +198,7 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
       resetOnboardingDraft();
     }
     setData(fresh);
+    setPhotoFile(null);
     setStep(firstStep);
     toast.message(isAuthenticatedFlow ? "Form cleared." : "Onboarding restarted.");
   }
@@ -212,6 +217,17 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
         step
       );
       const { petId, petName } = await createPetFromOnboardingDraft(supabase, user, draft);
+
+      if (photoFile) {
+        try {
+          const url = await uploadPetPhoto(supabase, user.id, petId, photoFile);
+          const { PetService } = await import("@/services/pet-service");
+          await new PetService(supabase).update(petId, { profile_image_url: url });
+        } catch (photoErr) {
+          console.warn("[Animivo:onboarding] Photo upload failed", photoErr);
+          toast.message(`${petName} was saved — you can add a photo from their profile.`);
+        }
+      }
 
       const analytics = new AnalyticsService(supabase);
       await analytics.track(AnalyticsEvents.PET_CREATED, user.id, petId, {
@@ -325,6 +341,12 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
             <CardTitle className="font-display text-xl sm:text-2xl">Tell us about your pet</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 px-4 pb-5 sm:px-6 sm:pb-6">
+            <PetPhotoPicker
+              name={data.name}
+              species={data.species}
+              file={photoFile}
+              onFileChange={setPhotoFile}
+            />
             <div className="space-y-2">
               <Label htmlFor="pet-name">Pet name *</Label>
               <Input id="pet-name" value={data.name} onChange={(e) => update({ name: e.target.value })} className="rounded-xl" placeholder="Luna" />

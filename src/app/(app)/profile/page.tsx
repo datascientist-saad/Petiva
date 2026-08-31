@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PetAvatar } from "@/components/pets/pet-avatar";
 import { EmptyState, LoadingState } from "@/components/shared/page-states";
 import { usePet } from "@/contexts/pet-context";
 import { useUser } from "@/contexts/user-context";
 import { createClient } from "@/lib/supabase/client";
 import { toUserMessage } from "@/lib/errors";
 import { profileUpdateSchema } from "@/lib/validations";
-import { speciesEmoji } from "@/lib/calculations";
 
 export default function ProfilePage() {
   const { profile, loading: userLoading, refreshProfile } = useUser();
@@ -102,7 +102,12 @@ export default function ProfilePage() {
               <Link key={pet.id} href={`/pets/${pet.id}`}>
                 <div className="flex items-center justify-between rounded-xl bg-secondary/50 p-3 transition-colors hover:bg-secondary">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{speciesEmoji(pet.species)}</span>
+                    <PetAvatar
+                      name={pet.name}
+                      species={pet.species}
+                      imageUrl={pet.profile_image_url}
+                      size="md"
+                    />
                     <div>
                       <p className="font-medium">{pet.name}</p>
                       <p className="text-xs text-muted-foreground capitalize">{pet.species}</p>

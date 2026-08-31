@@ -16,16 +16,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PetPhotoField } from "@/components/pets/pet-photo-field";
+import { PetAvatar } from "@/components/pets/pet-avatar";
 import { ErrorState, LoadingState } from "@/components/shared/page-states";
 import { createClient } from "@/lib/supabase/client";
 import { toUserMessage } from "@/lib/errors";
-import { calculatePetAge, speciesEmoji } from "@/lib/calculations";
+import { calculatePetAge } from "@/lib/calculations";
+import { usePet } from "@/contexts/pet-context";
 import { PetService } from "@/services/pet-service";
 import type { ActivityLevel, BodyCondition, DietGoal, FoodType, NeuteredStatus, PetWithDetails, Sex, Species } from "@/types/database";
 
 export default function PetDetailPage() {
   const params = useParams();
   const petId = params.petId as string;
+  const { refreshPets } = usePet();
   const [pet, setPet] = useState<PetWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,16 +101,43 @@ export default function PetDetailPage() {
         <Button variant="ghost" size="icon" asChild className="rounded-xl">
           <Link href="/profile"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
-        <div className="flex-1">
-          <h1 className="text-xl font-semibold flex items-center gap-2">
-            {speciesEmoji(pet.species)} {pet.name}
-          </h1>
-          <p className="text-sm text-muted-foreground">{age.label} old</p>
+        <div className="flex flex-1 items-center gap-3">
+          <PetAvatar
+            name={pet.name}
+            species={pet.species}
+            imageUrl={pet.profile_image_url}
+            size="lg"
+          />
+          <div>
+            <h1 className="text-xl font-semibold">{pet.name}</h1>
+            <p className="text-sm text-muted-foreground capitalize">
+              {pet.breed ? `${pet.breed} · ` : ""}
+              {age.label} old
+            </p>
+          </div>
         </div>
         <Button asChild variant="outline" size="sm" className="rounded-xl">
           <Link href="/health/diet">Diet plan</Link>
         </Button>
       </div>
+
+      <Card className="rounded-2xl">
+        <CardHeader>
+          <CardTitle className="text-base">Photo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PetPhotoField
+            petId={pet.id}
+            name={pet.name}
+            species={pet.species}
+            imageUrl={pet.profile_image_url}
+            onPhotoChange={(url) => {
+              setPet((current) => (current ? { ...current, profile_image_url: url } : current));
+              void refreshPets();
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <form onSubmit={handleSave} className="space-y-4">
         <Card className="rounded-2xl">
