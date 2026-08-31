@@ -46,7 +46,7 @@ export default function SetupCompletePage() {
 
         const { petId, petName } = await transferOnboardingDraft(supabase, user, draft);
         markOnboardingTransferred();
-        localStorage.setItem("petiva_selected_pet", petId);
+        localStorage.setItem("animivo_selected_pet", petId);
         await refreshPets();
         toast.success(`${petName} is ready! 🎉`);
         router.replace("/home");

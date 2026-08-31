@@ -2,14 +2,20 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import {
   draftToDietInput,
   draftToWeightKg,
+  draftToWeightGrams,
+  draftToBirdNutritionInput,
   mapDraftActivity,
   mapDraftFoodType,
 } from "@/lib/onboarding-draft";
 import { calculateDietPlan } from "@/lib/diet-calculations";
+import { calculateBirdNutrition } from "@/lib/nutrition/bird-calculator";
+import { NUTRITION_ENGINE_VERSION } from "@/lib/nutrition/engine";
+import { speciesUsesBirdNutrition } from "@/lib/species/registry";
 import type { OnboardingDraftData } from "@/types/onboarding-draft";
 import type { Pet } from "@/types/database";
 import { CareTaskService } from "@/services/care-task-service";
 import { DietPlanService } from "@/services/diet-plan-service";
+import { NutritionProfileService } from "@/services/nutrition-profile-service";
 import { WeightService } from "@/services/nutrition-service";
 import { PetService } from "@/services/pet-service";
 
@@ -18,6 +24,7 @@ function buildPetPayloadFromDraft(
   userId: string
 ): Partial<Pet> & { name: string; species: string; owner_id: string } {
   const weightKg = draftToWeightKg(draft);
+  const weightGrams = draftToWeightGrams(draft);
   const estimatedMonths = draft.use_approximate_age
     ? Number(draft.estimated_age_years || 0) * 12 + Number(draft.estimated_age_months || 0)
     : null;
@@ -31,9 +38,13 @@ function buildPetPayloadFromDraft(
     estimated_age_months: estimatedMonths || null,
     sex: draft.sex || null,
     weight_kg: weightKg,
+    weight_grams: weightGrams,
     weight_unit: draft.weight_unit,
     body_condition: draft.body_condition || null,
     diet_goal: draft.diet_goal || null,
+    primary_goal: draft.primary_goal || null,
+    species_profile: draft.species_profile as unknown as Record<string, unknown>,
+    calculation_version: NUTRITION_ENGINE_VERSION,
     neutered: draft.neutered,
     activity_level: mapDraftActivity(draft.activity_level),
     activity_level_extended: draft.activity_level || null,
@@ -102,7 +113,7 @@ async function syncDraftDetails(
   }
 
   const dietInput = draftToDietInput(draft);
-  if (dietInput) {
+  if (dietInput && !speciesUsesBirdNutrition(draft.species)) {
     const dietService = new DietPlanService(supabase);
     await dietService.savePlan(petId, userId, dietInput);
     const plan = calculateDietPlan(dietInput);
@@ -111,15 +122,42 @@ async function syncDraftDetails(
     }
   }
 
+  if (speciesUsesBirdNutrition(draft.species)) {
+    const birdInput = draftToBirdNutritionInput(draft);
+    const birdPlan = calculateBirdNutrition(birdInput);
+    const nutritionService = new NutritionProfileService(supabase);
+    await nutritionService.savePlanResult(petId, draft.species, birdInput, {
+      engine: "bird",
+      result: birdPlan,
+    });
+    const dietService = new DietPlanService(supabase);
+    await dietService.saveBirdPlan(petId, userId, birdInput, birdPlan);
+  }
+
   const careService = new CareTaskService(supabase);
   const existingTasks = await careService.list(petId);
   if (existingTasks.length === 0) {
-    await careService.generateDefaultCarePlan(
-      petId,
-      userId,
-      draft.name.trim(),
-      draft.meals_per_day ? Number(draft.meals_per_day) : null
-    );
+    if (speciesUsesBirdNutrition(draft.species)) {
+      const { WellnessInsightService } = await import("@/services/wellness-insight-service");
+      const roadmap = new WellnessInsightService(supabase).generateSpeciesRoadmapTasks(
+        draft.species,
+        draft.name.trim()
+      );
+      for (const task of roadmap) {
+        await careService.create(petId, userId, {
+          title: task.title,
+          category: task.category,
+          frequency: task.frequency,
+        });
+      }
+    } else {
+      await careService.generateDefaultCarePlan(
+        petId,
+        userId,
+        draft.name.trim(),
+        draft.meals_per_day ? Number(draft.meals_per_day) : null
+      );
+    }
   }
 }
 

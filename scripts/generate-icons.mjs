@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates simple Petiva PWA icons as PNG files.
+ * Generates simple Animivo PWA icons as PNG files.
  * Uses only Node.js built-ins (zlib + fs).
  */
 import fs from "fs";

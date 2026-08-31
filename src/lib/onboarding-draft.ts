@@ -1,4 +1,5 @@
 import { calculateDietPlan, kgFromLb, type DietCalculationInput } from "@/lib/diet-calculations";
+import { calculateBirdNutrition } from "@/lib/nutrition/bird-calculator";
 import type { OnboardingDraftData } from "@/types/onboarding-draft";
 import {
   ONBOARDING_DRAFT_STORAGE_KEY,
@@ -62,10 +63,47 @@ export function draftToAgeMonths(draft: OnboardingDraftData): number {
 export function draftToWeightKg(draft: OnboardingDraftData): number | null {
   const value = Number(draft.weight_value);
   if (!value || value <= 0) return null;
-  return draft.weight_unit === "lb" ? kgFromLb(value) : value;
+  if (draft.weight_unit === "lb") return kgFromLb(value);
+  if (draft.weight_unit === "g") return value / 1000;
+  return value;
+}
+
+export function draftToWeightGrams(draft: OnboardingDraftData): number | null {
+  const value = Number(draft.weight_value);
+  if (!value || value <= 0) return null;
+  if (draft.weight_unit === "g") return value;
+  const kg = draftToWeightKg(draft);
+  return kg != null ? Math.round(kg * 1000) : null;
+}
+
+export function draftToBirdNutritionInput(draft: OnboardingDraftData) {
+  const weightGrams = draftToWeightGrams(draft) ?? 0;
+  const ageMonths = draft.use_approximate_age
+    ? Number(draft.estimated_age_years || 0) * 12 + Number(draft.estimated_age_months || 0)
+    : draft.birth_date
+      ? Math.max(
+          0,
+          (new Date().getFullYear() - new Date(draft.birth_date).getFullYear()) * 12
+        )
+      : 24;
+
+  return {
+    birdSpecies: draft.species_profile.bird_species || draft.breed || "Other companion bird",
+    weightGrams,
+    ageMonths,
+    activityLevel: (draft.activity_level || "moderate") as "low" | "moderate" | "active" | "very_active",
+    pelletPercentCurrent: Number(draft.species_profile.pellet_percent) || null,
+    seedPercentCurrent: Number(draft.species_profile.seed_percent) || null,
+    vegetablePercentCurrent: Number(draft.species_profile.vegetable_percent) || null,
+    fruitPercentCurrent: Number(draft.species_profile.fruit_percent) || null,
+    eggLaying: draft.species_profile.egg_laying,
+    featherPluckingHistory: draft.species_profile.feather_plucking_history,
+    healthFlags: draft.health_conditions,
+  };
 }
 
 export function draftToDietInput(draft: OnboardingDraftData): DietCalculationInput | null {
+  if (draft.species === "bird") return null;
   const weightKg = draftToWeightKg(draft);
   if (!weightKg || !draft.activity_level || !draft.body_condition || !draft.diet_goal || !draft.food_type) {
     return null;
@@ -77,7 +115,7 @@ export function draftToDietInput(draft: OnboardingDraftData): DietCalculationInp
   ];
 
   return {
-    species: draft.species,
+    species: draft.species as "cat" | "dog",
     weightKg,
     ageMonths: draftToAgeMonths(draft),
     neutered: draft.neutered,
@@ -99,6 +137,9 @@ export function draftToDietInput(draft: OnboardingDraftData): DietCalculationInp
 }
 
 export function buildDietPreviewFromDraft(draft: OnboardingDraftData) {
+  if (draft.species === "bird") {
+    return calculateBirdNutrition(draftToBirdNutritionInput(draft));
+  }
   const input = draftToDietInput(draft);
   if (!input) return null;
   return calculateDietPlan(input);

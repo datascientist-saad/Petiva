@@ -21,7 +21,7 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || supabasePublicDefaults.anonKey,
     NEXT_PUBLIC_APP_URL:
       process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://petiva.vercel.app"),
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://animivo.vercel.app"),
   },
 };
 

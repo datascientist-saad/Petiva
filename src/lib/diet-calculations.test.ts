@@ -98,6 +98,6 @@ describe("onboarding draft transformation", () => {
 
     const preview = buildDietPreviewFromDraft(draft);
     expect(preview).not.toBeNull();
-    expect(preview!.merKcalMin).toBeGreaterThan(0);
+    expect(preview && "merKcalMin" in preview ? preview.merKcalMin : 0).toBeGreaterThan(0);
   });
 });

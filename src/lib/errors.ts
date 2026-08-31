@@ -30,13 +30,13 @@ export function toUserMessage(error: unknown, fallback = "Something went wrong. 
   const supabaseMessage = supabaseErrorMessage(error);
   if (supabaseMessage) return supabaseMessage;
   if (process.env.NODE_ENV === "development") {
-    console.error("[Petiva]", error);
+    console.error("[Animivo]", error);
   }
   return fallback;
 }
 
 export function logError(context: string, error: unknown) {
   if (process.env.NODE_ENV !== "production") {
-    console.error(`[Petiva:${context}]`, error);
+    console.error(`[Animivo:${context}]`, error);
   }
 }
