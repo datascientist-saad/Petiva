@@ -29,9 +29,12 @@ Do not provide medication dosages unless the medication information came directl
 const EMERGENCY_PATTERNS = [
   /difficult(y)? breathing/i,
   /can'?t breathe/i,
+  /open.?mouth breathing/i,
+  /tail bobbing/i,
   /collapse/i,
   /seizure/i,
   /severe bleeding/i,
+  /active bleeding/i,
   /poison(ing|ed)?/i,
   /unable to (pee|urinate)/i,
   /can'?t urinate/i,
@@ -41,6 +44,12 @@ const EMERGENCY_PATTERNS = [
   /unresponsive/i,
   /persistent vomiting/i,
   /bloated (belly|abdomen)/i,
+  /weak grip/i,
+  /egg binding/i,
+  /refus(e|al) to eat/i,
+  /not eating for/i,
+  /severe balance/i,
+  /sudden weight loss/i,
 ];
 
 export interface PetAiContext {

@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { usePet } from "@/contexts/pet-context";
-import { createClient } from "@/lib/supabase/client";
 import type { DietCalculationResult } from "@/lib/diet-calculations";
+import type { BirdNutritionResult } from "@/lib/nutrition/bird-calculator";
+import { speciesUsesBirdNutrition } from "@/lib/species/registry";
+import { createClient } from "@/lib/supabase/client";
 import { DietPlanService } from "@/services/diet-plan-service";
 import type { DietPlan } from "@/types/database";
+
+function isBirdResult(result: unknown): result is BirdNutritionResult {
+  return Boolean(result && typeof result === "object" && "suggestedPelletPercent" in result);
+}
 
 export function DietDashboardCard() {
   const { selectedPetId, selectedPet } = usePet();
@@ -33,11 +39,60 @@ export function DietDashboardCard() {
     void load();
   }, [load]);
 
-  if (!selectedPet || !plan) return null;
+  if (!selectedPet) return null;
 
-  const result = plan.result as unknown as DietCalculationResult;
-  const total = result.mealSchedule?.length ?? 0;
-  const nextMeal = result.mealSchedule?.find((_, i) => i >= completed);
+  if (!plan) {
+    return (
+      <Card className="rounded-2xl border-dashed shadow-sm">
+        <CardContent className="flex items-center justify-between gap-3 p-5">
+          <div>
+            <p className="font-medium">No nutrition plan yet</p>
+            <p className="text-sm text-muted-foreground">
+              Complete onboarding or update {selectedPet.name}&apos;s profile to generate a plan.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="secondary" className="rounded-xl">
+            <Link href="/health/diet">Set up</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const result = plan.result as unknown;
+  const isBird = speciesUsesBirdNutrition(selectedPet.species) || plan.engine_type === "bird";
+
+  if (isBird && isBirdResult(result)) {
+    return (
+      <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 to-secondary shadow-sm">
+        <CardContent className="space-y-3 p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Salad className="size-5 text-primary" />
+              <p className="font-medium">Today&apos;s feeding guidance</p>
+            </div>
+            <Button asChild size="sm" variant="secondary" className="rounded-xl">
+              <Link href="/health/diet">View plan</Link>
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Pellets {result.suggestedPelletPercent.min}–{result.suggestedPelletPercent.max}% · Seeds ≤
+            {result.suggestedSeedPercentMax}% · Greens ≥{result.suggestedVegetablePercentMin}%
+          </p>
+          <p className="text-sm">{result.waterSchedule}</p>
+          {result.isGeneralGuidance ? (
+            <p className="text-xs text-muted-foreground">
+              General guidance — confirm portions with an avian veterinarian.
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const mammal = result as DietCalculationResult;
+  const total = mammal.mealSchedule?.length ?? 0;
+  const nextMeal = mammal.mealSchedule?.find((_, i) => i >= completed);
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
@@ -53,21 +108,28 @@ export function DietDashboardCard() {
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          Target: {result.merKcalMin}–{result.merKcalMax} kcal
-          {result.dailyFoodGrams ? ` · ~${result.dailyFoodGrams}g` : ""}
+          Target: {mammal.merKcalMin}–{mammal.merKcalMax} kcal
+          {mammal.dailyFoodGrams ? ` · ~${mammal.dailyFoodGrams}g` : ""}
+          {mammal.treatAllowanceKcal ? ` · Treats ~${mammal.treatAllowanceKcal} kcal` : ""}
         </p>
         {nextMeal ? (
-          <p className="text-sm">Next meal: {nextMeal.time} ({nextMeal.calories} kcal)</p>
-        ) : (
-          <p className="text-sm text-success">All meals completed today 🎉</p>
-        )}
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{completed}/{total} meals</span>
-            <span>{progress}%</span>
+          <p className="text-sm">
+            Next meal: {nextMeal.time} ({nextMeal.calories} kcal)
+          </p>
+        ) : total > 0 ? (
+          <p className="text-sm text-success">All meals completed today</p>
+        ) : null}
+        {total > 0 ? (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>
+                {completed}/{total} meals
+              </span>
+              <span>{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
           </div>
-          <Progress value={progress} className="h-2" />
-        </div>
+        ) : null}
       </CardContent>
     </Card>
   );

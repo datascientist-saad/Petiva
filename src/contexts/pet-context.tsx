@@ -26,8 +26,8 @@ interface PetContextValue {
 
 const PetContext = createContext<PetContextValue | null>(null);
 
-const STORAGE_KEY = "petiva_selected_pet";
-const LEGACY_STORAGE_KEY = "pawly_selected_pet";
+const STORAGE_KEY = "animivo_selected_pet";
+const LEGACY_STORAGE_KEY = "animivo_selected_pet";
 
 export function PetProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);

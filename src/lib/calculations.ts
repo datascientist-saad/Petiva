@@ -226,5 +226,7 @@ export function userCanEditPet(
 }
 
 export function speciesEmoji(species: string): string {
-  return species === "dog" ? "🐶" : "🐱";
+  if (species === "dog") return "🐶";
+  if (species === "bird") return "🦜";
+  return "🐱";
 }

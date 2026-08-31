@@ -23,7 +23,7 @@ export interface DietCalculationInput {
   mixedDryPercent?: number | null;
   allergies?: string[];
   conditions?: string[];
-  sex?: "male" | "female" | null;
+  sex?: "male" | "female" | "unknown" | null;
 }
 
 export interface MealScheduleItem {

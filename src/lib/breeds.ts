@@ -29,6 +29,10 @@ export const CAT_BREEDS = [
   "I'm not sure",
 ] as const;
 
-export function breedsForSpecies(species: "cat" | "dog"): readonly string[] {
+import type { SupportedSpeciesId } from "@/lib/species/registry";
+import { BIRD_SPECIES_OPTIONS } from "@/lib/species/bird-breeds";
+
+export function breedsForSpecies(species: SupportedSpeciesId): readonly string[] {
+  if (species === "bird") return BIRD_SPECIES_OPTIONS;
   return species === "dog" ? DOG_BREEDS : CAT_BREEDS;
 }

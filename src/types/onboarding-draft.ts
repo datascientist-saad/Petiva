@@ -1,6 +1,24 @@
 import type { DietCalculationResult } from "@/lib/diet-calculations";
+import type { BirdNutritionResult } from "@/lib/nutrition/bird-calculator";
+import type { SupportedSpeciesId } from "@/lib/species/registry";
 
 export type OnboardingDraftStep = "welcome" | "basics" | "body" | "diet" | "preview";
+
+export interface BirdSpeciesProfile {
+  bird_species: string;
+  variety: string;
+  wing_status: "flighted" | "clipped" | "unknown" | "";
+  housing: "indoor_cage" | "aviary" | "mixed" | "";
+  pellet_percent: string;
+  seed_percent: string;
+  vegetable_percent: string;
+  fruit_percent: string;
+  out_of_cage_hours: string;
+  sleep_hours: string;
+  lives_with_other_birds: "alone" | "with_other_birds" | "mixed" | "";
+  egg_laying: boolean;
+  feather_plucking_history: boolean;
+}
 
 export interface OnboardingDraftData {
   version: 1;
@@ -8,15 +26,15 @@ export interface OnboardingDraftData {
   stepIndex: number;
   updatedAt: string;
   name: string;
-  species: "cat" | "dog";
+  species: SupportedSpeciesId;
   breed: string;
   birth_date: string;
   estimated_age_years: string;
   estimated_age_months: string;
   use_approximate_age: boolean;
-  sex: "male" | "female" | "";
+  sex: "male" | "female" | "unknown" | "";
   weight_value: string;
-  weight_unit: "kg" | "lb";
+  weight_unit: "kg" | "lb" | "g";
   activity_level: "low" | "moderate" | "active" | "very_active" | "";
   body_condition: "underweight" | "ideal" | "overweight" | "unsure" | "";
   neutered: "yes" | "no" | "unknown";
@@ -32,11 +50,13 @@ export interface OnboardingDraftData {
   health_conditions: string[];
   other_condition: string;
   diet_goal: "maintain" | "lose" | "gain" | "improve" | "";
-  diet_preview?: DietCalculationResult | null;
+  primary_goal: string;
+  species_profile: BirdSpeciesProfile;
+  diet_preview?: DietCalculationResult | BirdNutritionResult | null;
 }
 
-export const ONBOARDING_DRAFT_STORAGE_KEY = "petiva_onboarding_draft_v1";
-export const ONBOARDING_TRANSFER_FLAG_KEY = "petiva_onboarding_transferred";
+export const ONBOARDING_DRAFT_STORAGE_KEY = "animivo_onboarding_draft_v1";
+export const ONBOARDING_TRANSFER_FLAG_KEY = "animivo_onboarding_transferred";
 
 export const HEALTH_CONDITION_OPTIONS = [
   "Arthritis",
@@ -82,5 +102,21 @@ export const initialOnboardingDraft = (): OnboardingDraftData => ({
   health_conditions: [],
   other_condition: "",
   diet_goal: "",
+  primary_goal: "",
+  species_profile: {
+    bird_species: "",
+    variety: "",
+    wing_status: "",
+    housing: "",
+    pellet_percent: "70",
+    seed_percent: "10",
+    vegetable_percent: "15",
+    fruit_percent: "5",
+    out_of_cage_hours: "",
+    sleep_hours: "10",
+    lives_with_other_birds: "",
+    egg_laying: false,
+    feather_plucking_history: false,
+  },
   diet_preview: null,
 });

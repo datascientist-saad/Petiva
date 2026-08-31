@@ -1,6 +1,6 @@
 {
-  "name": "Petiva",
-  "short_name": "Petiva",
+  "name": "Animivo",
+  "short_name": "Animivo",
   "description": "Your pet's health, all in one place.",
   "start_url": "/",
   "display": "standalone",

@@ -1,16 +1,20 @@
-# Petiva 🐾
+# Animivo
 
-Your pet’s health, all in one place.
+**Every pet. One smarter care plan.**
 
-Petiva is a mobile-first pet health and care companion for cats and dogs. Pet parents create a profile once, then track meals, weight, vaccinations, medications, care tasks, medical records, and get contextual help from Petiva AI.
+Animivo is a personalized nutrition, health, and preventive-care platform for companion animals. It creates evolving care plans from structured calculations—not guesswork—and helps owners track meals, weight, medications, vaccinations, symptoms, and daily care tasks with species-aware guidance.
 
-This repository is a production-quality MVP intended for a small real-user pilot (≈5–10 people).
+Supported species in this release: **cat**, **dog**, and **bird**. The architecture is prepared for rabbit, guinea pig, hamster, reptile, fish, and other companions without another major schema rewrite.
+
+## Product positioning
+
+Animivo creates an evolving nutrition, health, and preventive-care plan for every pet. It is not a generic pet-record app: numerical diet guidance comes from versioned, deterministic engines; AI explains and summarizes but does not invent feeding amounts or diagnoses.
 
 ## Stack
 
 - **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui
 - **Backend:** Supabase (Auth, Postgres, RLS, Storage)
-- **AI:** OpenAI via a server-side abstraction layer (safe fallback when `OPENAI_API_KEY` is missing)
+- **AI:** OpenAI via server-side abstraction (safe fallback when `OPENAI_API_KEY` is missing)
 - **Charts:** Recharts
 - **Deploy:** Vercel-ready
 
@@ -18,19 +22,26 @@ This repository is a production-quality MVP intended for a small real-user pilot
 
 ```
 src/
-  app/                 # Routes (marketing, auth, app, APIs)
-  components/          # UI + feature components
-  contexts/            # Pet + user providers
-  features/            # (reserved) domain UI modules
-  hooks/
-  lib/                 # brand, calculations, validations, supabase clients
-  services/            # PetService, CareTaskService, AIService, …
+  app/                    # Routes (marketing, auth, app, APIs)
+  components/             # UI + feature components
+  contexts/               # Pet + user providers
+  lib/
+    brand.ts              # Central Animivo branding
+    species/registry.ts   # Species capabilities (do not scatter species checks)
+    nutrition/            # Mammal + bird engines, reference data
+    wellness/             # Rule-based insight generation
+    entitlements/         # Free / Animivo Plus plans
+    i18n/                 # EN + partial AR strings (RTL-ready)
+  services/               # PetService, DietPlanService, AIService, …
   types/
-supabase/migrations/   # Schema + RLS + storage policies
-scripts/seed.ts        # Optional demo data (never auto-run in prod)
+supabase/migrations/      # Incremental schema + RLS
+docs/
+  DOMAIN_SAFETY.md        # Deterministic vs AI boundaries
+  ANIMIVO_ROADMAP.md      # Release scope and future work
+scripts/seed.ts           # Optional dev seed (never auto-run in prod)
 ```
 
-Domain logic lives in `src/services` and `src/lib/calculations`. UI components should not hardcode AI prompts or duplicate age/vaccination/nutrition math.
+Domain logic lives in `src/services` and `src/lib`. React components must not embed nutrition formulas, medical rules, or AI prompts.
 
 ## Prerequisites
 
@@ -63,39 +74,53 @@ Never expose the service role key to the browser.
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. In **Authentication → URL configuration**, add:
-   - Site URL: `http://localhost:3000` (and your Vercel URL in production)
-   - Redirect URLs: `http://localhost:3000/auth/callback`, `https://YOUR_DOMAIN/auth/callback`, reset-password URLs
-3. Enable **Email** provider (password login). Google/Apple can be enabled later using the same auth pages.
-4. Apply the migration:
+   - Site URL: `http://localhost:3000` (and your production URL)
+   - Redirect URLs: `/auth/callback`, reset-password URLs
+3. Enable **Email** provider (password login).
+4. Apply migrations in order:
 
 ```bash
 npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 ```
 
-Or paste `supabase/migrations/20260323000000_pawly_init.sql` into the Supabase SQL Editor and run it.
+Migrations:
 
-The migration creates:
+| File | Purpose |
+|---|---|
+| `20260323000000_pawly_init.sql` | Core schema, RLS, storage |
+| `20260831000000_animivo_expansion.sql` | Bird support, food catalogue, diet check-ins, wellness insights, habitat, subscriptions |
 
-- Tables: profiles, pets, pet_access, conditions, allergies, weight_records, vaccinations, medications, meal_logs, care_tasks, task_completions, medical_records, symptoms, notifications, ai_conversations, ai_messages, ai_usage, analytics_events
-- Triggers for profile creation + owner pet_access
-- RLS policies (owner or accepted caregiver)
-- Storage buckets: `pet-photos` (public), `medical-files` (private), `symptom-photos` (private)
+The expansion migration adds bird species, `species_profile` JSONB, food products, nutrition profiles, diet plan versioning items, diet check-ins, wellness insights, bird habitat assessments, expanded caregiver roles, and subscription fields—without destroying existing cat/dog data.
 
 ### RLS
 
-Every pet-scoped table checks `user_has_pet_access(pet_id)` or owner helpers. Changing a pet ID in the URL cannot bypass Postgres policies. Medical files use private storage + signed URLs.
+Every pet-scoped table uses `user_has_pet_access(pet_id)` or owner helpers. Caregiver permissions are enforced in Postgres, not only in the UI.
 
-## OpenAI setup
+## Nutrition engine
 
-Care plan creation works **without** OpenAI. The key only powers live AI chat answers in `/ai`.
+- **Cats & dogs:** RER/MER-based deterministic calculator in `src/lib/diet-calculations.ts`
+- **Birds:** Separate composition model in `src/lib/nutrition/bird-calculator.ts` using versioned reference data—never dog/cat calorie equations
+- **Routing:** `src/lib/nutrition/engine.ts` selects the correct engine by species
+- **Versioning:** Diet plans retain full history; adjustments create new versions
+- **Check-ins:** `diet_check_ins` table + UI dialog for weekly progress reviews
 
-1. Create an API key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
-2. Add it as `OPENAI_API_KEY`:
-   - **Local:** paste into `.env.local` (copy from `.env.example`), then restart `npm run dev`.
-   - **Production (Vercel):** open your project → **Settings** → **Environment Variables** → add `OPENAI_API_KEY` with your `sk-...` key for **Production** and **Preview** → **Redeploy** the latest deployment.
-3. Optional: set `AI_DAILY_MESSAGE_LIMIT` (default `20`) in the same places.
-4. Without the key, `/api/ai/chat` still answers factual questions from the pet database context and returns safe educational fallbacks.
+See `docs/DOMAIN_SAFETY.md` for what AI may and may not do.
+
+## AI safety
+
+- Animivo AI uses the selected pet's authorized context (species, weight, plan, records)
+- Emergency language (including bird-specific cues) triggers urgent-care messaging
+- AI does not diagnose, invent medication doses, or override veterinarian instructions
+- Daily usage limits apply; safe fallbacks when OpenAI is unavailable
+
+## Subscription adapter
+
+Free and **Animivo Plus** entitlements are defined in `src/lib/entitlements/plans.ts` with feature gates in `src/services/entitlement-service.ts`. Billing is behind a server-side adapter—no fake successful payments. Connect Stripe or another provider when credentials exist.
+
+## Localization (GCC-ready)
+
+User-facing strings are structured in `src/lib/i18n/` with English and partial Arabic for high-value screens. Components are RTL-ready; dates and units should use locale-aware formatting as translation expands.
 
 ## Local development
 
@@ -104,9 +129,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-Useful scripts:
+Validation:
 
 ```bash
 npm run lint
@@ -118,69 +141,57 @@ npm run build
 ### Seed demo data (dev only)
 
 ```bash
-SEED_EMAIL=demo@petiva.app SEED_PASSWORD=demo-demo-demo npm run seed
+SEED_EMAIL=demo@animivo.app SEED_PASSWORD=demo-demo-demo npm run seed
 ```
 
-Creates Demo Owner with Luna (cat) and Bruno (dog), plus sample weights, vaccines, meals, tasks, and notifications.
-
-## Branding
-
-Global brand tokens live in `src/lib/brand.ts` (name, tagline, colors). Theme CSS variables are in `src/app/globals.css`.
-
-## Admin access
-
-Set `ADMIN_EMAILS=you@example.com` then visit `/admin` while signed in as that email. The dashboard shows aggregate pilot metrics only.
+Food catalogue seed is kept separate and is not auto-run in production.
 
 ## Deployment to Vercel
 
-1. Push this repo to GitHub.
-2. Import the project in Vercel.
-3. Add the same environment variables.
-4. Set `NEXT_PUBLIC_APP_URL` to the production URL.
-5. Update Supabase Auth redirect URLs to the production domain.
-6. Deploy.
+1. Push to GitHub and import in Vercel.
+2. Add environment variables (including `NEXT_PUBLIC_APP_URL` for production).
+3. Update Supabase Auth redirect URLs to the production domain.
+4. Apply `20260831000000_animivo_expansion.sql` if not yet applied.
+5. Redeploy.
 
 ## Testing
 
-Unit tests cover core calculations:
-
-- Pet age
-- Vaccination overdue / due soon
-- Weekly care completion %
-- Weight difference
-- Food consumed today
-- Pet authorization helper
+Unit tests cover species registry, mammal and bird nutrition, entitlements, wellness insight rules, onboarding transfer, and core calculations.
 
 ```bash
 npm test
 ```
 
-Manual pilot checklist (must work end-to-end against a real Supabase project):
+### Manual QA checklist
 
-1. Sign up → onboarding → create Luna
-2. Add a second pet → switch pets
-3. Log meal → nutrition updates
-4. Add weight → chart updates
-5. Add vaccination → upcoming care
-6. Add medication → health section
-7. Create + complete care task → weekly % changes
-8. Upload medical record → timeline
-9. Ask Petiva AI (selected pet context)
-10. Log out / log in → data persists
-11. Second user cannot access first user’s pets
+1. Pre-signup onboarding: cat, dog, and bird flows with Back navigation
+2. Signup → draft transfers to pet profile and diet plan
+3. Mixed-species household: switch pets; species-appropriate dashboard cards
+4. Log meal, weight (grams for birds), medication, care task
+5. Diet check-in saves and does not overwrite plan history
+6. Bird habitat & safety checklist
+7. Veterinary report: print/PDF, authorization enforced
+8. Animivo AI with selected pet context; emergency wording escalates
+9. Caregiver invite: RLS blocks unauthorized access
+10. Upgrade screen and entitlements (Free vs Plus)
+11. Mobile, tablet, and desktop layouts
 
-## Privacy & AI safety
+## Bird support limitations
+
+- Bird nutrition provides conservative composition guidance from reference data—not therapeutic avian diets
+- Vaccination requirements are not auto-generated for birds; record per avian-veterinary advice
+- Habitat safety checklist is educational, not a professional home-safety certification
+- Incomplete reference data is labeled as general guidance requiring avian-vet confirmation
+
+## Privacy
 
 - `/privacy`, `/terms`, `/ai-disclaimer`
-- AI never claims to diagnose; emergency language triggers urgent-care messaging
-- No automatic medication dosing advice beyond owner-recorded prescriptions
+- Aggregate admin analytics exclude individual medical details
 
-## Notes / intentional MVP limits
+## Documentation
 
-- Web push notifications are not required; in-app notifications are implemented
-- Family sharing uses secure invite tokens (caregiver role)
-- Only cats and dogs are supported
-- Marketplace / GPS / payments / telehealth are explicitly out of scope
+- `docs/DOMAIN_SAFETY.md` — deterministic vs AI boundaries
+- `docs/ANIMIVO_ROADMAP.md` — implemented, prepared, and planned features
 
 ## License
 

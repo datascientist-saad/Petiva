@@ -1,5 +1,5 @@
 /**
- * Public Supabase config for the Petiva project.
+ * Public Supabase config for the Animivo project.
  * The anon key is safe to expose in the browser (RLS still protects data).
  * Prefer env vars; these defaults keep deploys working if Vercel env is unset.
  */

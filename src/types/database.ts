@@ -1,14 +1,14 @@
-export type Species = "cat" | "dog";
-export type Sex = "male" | "female";
+export type Species = "cat" | "dog" | "bird" | "rabbit" | "guinea_pig" | "hamster" | "reptile" | "fish" | "other";
+export type Sex = "male" | "female" | "unknown";
 export type NeuteredStatus = "yes" | "no" | "unknown";
 export type ActivityLevel = "low" | "moderate" | "high";
 export type ExtendedActivityLevel = "low" | "moderate" | "active" | "very_active";
 export type BodyCondition = "underweight" | "ideal" | "overweight" | "unsure";
 export type DietGoal = "maintain" | "lose" | "gain" | "improve";
-export type WeightUnit = "kg" | "lb";
+export type WeightUnit = "kg" | "lb" | "g";
 export type FoodType = "dry" | "wet" | "mixed" | "raw" | "other";
 export type FoodUnit = "grams" | "cans" | "portions";
-export type PetAccessRole = "owner" | "caregiver";
+export type PetAccessRole = "owner" | "co_owner" | "caregiver" | "view_only";
 export type VaccinationStatus = "upcoming" | "completed" | "overdue";
 export type MedicationStatus = "active" | "past";
 export type SymptomSeverity = "mild" | "moderate" | "severe";
@@ -79,6 +79,10 @@ export interface Pet {
   food_unit: FoodUnit;
   meals_per_day: number | null;
   onboarding_completed: boolean;
+  species_profile: Record<string, unknown>;
+  primary_goal: string | null;
+  weight_grams: number | null;
+  calculation_version: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -234,6 +238,8 @@ export interface DietPlan {
   created_by: string | null;
   version: number;
   is_current: boolean;
+  engine_type?: string | null;
+  engine_version?: string | null;
   inputs: Record<string, unknown>;
   result: Record<string, unknown>;
   vet_approved: boolean;
@@ -293,3 +299,54 @@ export type PetWithDetails = Pet & {
   allergies: Allergy[];
   role?: PetAccessRole;
 };
+
+export interface NutritionProfile {
+  id: string;
+  pet_id: string;
+  engine_type: "mammal" | "bird";
+  engine_version: string;
+  reference_version: string | null;
+  profile: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DietCheckIn {
+  id: string;
+  pet_id: string;
+  created_by: string | null;
+  check_in_date: string;
+  weight_kg: number | null;
+  weight_grams: number | null;
+  body_condition: string | null;
+  appetite: string | null;
+  food_adherence: string | null;
+  owner_notes: string | null;
+  plan_suitable: boolean | null;
+  adjustment_recommended: boolean | null;
+  created_at: string;
+}
+
+export interface WellnessInsight {
+  id: string;
+  pet_id: string;
+  insight_type: string;
+  severity: "normal" | "attention" | "vet_review" | "emergency";
+  title: string;
+  body: string;
+  source_data: Record<string, unknown>;
+  rule_version: string;
+  requires_vet_review: boolean;
+  acknowledged_at: string | null;
+  dismissed_at: string | null;
+  generated_at: string;
+  created_at: string;
+}
+
+export interface BirdHabitatAssessment {
+  id: string;
+  pet_id: string;
+  assessed_at: string;
+  safety_checklist: Record<string, boolean>;
+  created_at: string;
+}

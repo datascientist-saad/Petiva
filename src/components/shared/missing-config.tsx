@@ -18,7 +18,7 @@ export function MissingConfigScreen() {
         <ol className="list-decimal space-y-2 pl-5 text-sm text-foreground/90">
           <li>
             Locally: copy <code className="rounded bg-muted px-1">.env.example</code> to{" "}
-            <code className="rounded bg-muted px-1">.env.local</code>, fill the Petiva project keys, then restart{" "}
+            <code className="rounded bg-muted px-1">.env.local</code>, fill the Animivo project keys, then restart{" "}
             <code className="rounded bg-muted px-1">npm run dev</code>.
           </li>
           <li>

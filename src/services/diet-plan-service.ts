@@ -5,12 +5,15 @@ import {
   type DietCalculationInput,
   type DietCalculationResult,
 } from "@/lib/diet-calculations";
+import type { BirdNutritionInput, BirdNutritionResult } from "@/lib/nutrition/bird-calculator";
+import { NUTRITION_ENGINE_VERSION } from "@/lib/nutrition/engine";
 import type { DietPlan, Pet } from "@/types/database";
 
 export class DietPlanService {
   constructor(private supabase: SupabaseClient) {}
 
   buildInputFromPet(pet: Pet, extras?: Partial<DietCalculationInput>): DietCalculationInput | null {
+    if (pet.species !== "cat" && pet.species !== "dog") return null;
     if (!pet.weight_kg || !pet.diet_goal) return null;
 
     const activity =
@@ -117,6 +120,44 @@ export class DietPlanService {
       .single();
 
     if (error) throw new AppError("Could not save diet plan.", { cause: error });
+    return data as DietPlan;
+  }
+
+  async saveBirdPlan(
+    petId: string,
+    userId: string,
+    input: BirdNutritionInput,
+    result: BirdNutritionResult,
+    options?: { ownerNotes?: string }
+  ): Promise<DietPlan> {
+    const existing = await this.getCurrent(petId);
+    if (existing) {
+      await this.supabase.from("diet_plans").update({ is_current: false }).eq("id", existing.id);
+    }
+
+    const versions = await this.listVersions(petId);
+    const nextVersion = (versions[0]?.version ?? 0) + 1;
+    const reviewBy = new Date();
+    reviewBy.setDate(reviewBy.getDate() + 14);
+
+    const { data, error } = await this.supabase
+      .from("diet_plans")
+      .insert({
+        pet_id: petId,
+        created_by: userId,
+        version: nextVersion,
+        is_current: true,
+        engine_type: "bird",
+        engine_version: NUTRITION_ENGINE_VERSION,
+        inputs: input,
+        result,
+        owner_notes: options?.ownerNotes ?? null,
+        review_by: reviewBy.toISOString().slice(0, 10),
+      })
+      .select("*")
+      .single();
+
+    if (error) throw new AppError("Could not save bird diet plan.", { cause: error });
     return data as DietPlan;
   }
 

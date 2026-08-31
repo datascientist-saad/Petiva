@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { SUPPORTED_SPECIES } from "@/lib/species/registry";
+import { BIRD_SPECIES_OPTIONS } from "@/lib/species/bird-breeds";
 import { brand } from "@/lib/brand";
 import { breedsForSpecies } from "@/lib/breeds";
 import { calculatePetAge, speciesEmoji } from "@/lib/calculations";
@@ -60,12 +62,20 @@ function validateStepData(current: OnboardingDraftData, currentStep: number): bo
       toast.error("Select an activity level.");
       return false;
     }
-    if (!current.body_condition) {
+    if (current.species !== "bird" && !current.body_condition) {
       toast.error("Select a body condition.");
       return false;
     }
   }
   if (currentStep === 3) {
+    if (current.species === "bird") {
+      const p = current.species_profile;
+      if (!p.pellet_percent || !p.vegetable_percent) {
+        toast.error("Enter your bird's current diet composition.");
+        return false;
+      }
+      return true;
+    }
     if (!current.food_type) {
       toast.error("Select a food type.");
       return false;
@@ -254,19 +264,32 @@ export function PreSignupWizard() {
               <Label>Pet type</Label>
               <SegmentedSelector
                 value={data.species}
-                onChange={(v) => update({ species: v, breed: "" })}
-                options={[
-                  { value: "cat", label: "🐱 Cat" },
-                  { value: "dog", label: "🐶 Dog" },
-                ]}
+                onChange={(v) =>
+                  update({
+                    species: v as OnboardingDraftData["species"],
+                    breed: "",
+                    weight_unit: v === "bird" ? "g" : data.weight_unit === "g" ? "kg" : data.weight_unit,
+                  })
+                }
+                options={SUPPORTED_SPECIES.map((s) => ({
+                  value: s.id,
+                  label: `${s.icon} ${s.displayName}`,
+                }))}
               />
             </div>
             <div className="space-y-2">
-              <Label>Breed</Label>
-              <Select value={data.breed} onValueChange={(v) => update({ breed: v })}>
-                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Search or select breed" /></SelectTrigger>
+              <Label>{data.species === "bird" ? "Bird species" : "Breed"}</Label>
+              <Select
+                value={data.species === "bird" ? data.species_profile.bird_species : data.breed}
+                onValueChange={(v) =>
+                  data.species === "bird"
+                    ? update({ species_profile: { ...data.species_profile, bird_species: v }, breed: v })
+                    : update({ breed: v })
+                }
+              >
+                <SelectTrigger className="rounded-xl"><SelectValue placeholder="Search or select" /></SelectTrigger>
                 <SelectContent>
-                  {breeds.map((b) => (
+                  {(data.species === "bird" ? BIRD_SPECIES_OPTIONS : breeds).map((b) => (
                     <SelectItem key={b} value={b}>{b}</SelectItem>
                   ))}
                 </SelectContent>
@@ -298,10 +321,18 @@ export function PreSignupWizard() {
               <SegmentedSelector
                 value={data.sex}
                 onChange={(v) => update({ sex: v })}
-                options={[
-                  { value: "female", label: "Female" },
-                  { value: "male", label: "Male" },
-                ]}
+                options={
+                  data.species === "bird"
+                    ? [
+                        { value: "female", label: "Female" },
+                        { value: "male", label: "Male" },
+                        { value: "unknown", label: "Unknown" },
+                      ]
+                    : [
+                        { value: "female", label: "Female" },
+                        { value: "male", label: "Male" },
+                      ]
+                }
               />
             </div>
           </CardContent>
@@ -314,11 +345,12 @@ export function PreSignupWizard() {
             <CardTitle className="font-display text-xl sm:text-2xl">Body & lifestyle</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 px-4 pb-5 sm:px-6 sm:pb-6">
-            <div className="grid grid-cols-2 gap-3">
+            <div className={cn("grid gap-3", data.species === "bird" ? "grid-cols-1" : "grid-cols-2")}>
               <div className="space-y-2">
-                <Label>Weight *</Label>
-                <Input type="number" step="0.1" value={data.weight_value} onChange={(e) => update({ weight_value: e.target.value })} className="rounded-xl" />
+                <Label>{data.species === "bird" ? "Weight (grams) *" : "Weight *"}</Label>
+                <Input type="number" step={data.species === "bird" ? "1" : "0.1"} value={data.weight_value} onChange={(e) => update({ weight_value: e.target.value })} className="rounded-xl" />
               </div>
+              {data.species !== "bird" ? (
               <div className="space-y-2">
                 <Label>Unit</Label>
                 <SegmentedSelector
@@ -330,6 +362,7 @@ export function PreSignupWizard() {
                   ]}
                 />
               </div>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label>Activity level *</Label>
@@ -337,14 +370,25 @@ export function PreSignupWizard() {
                 value={data.activity_level}
                 onChange={(v) => update({ activity_level: v })}
                 columns={2}
-                options={[
-                  { value: "low", label: "Low", description: "Mostly resting, short walks" },
-                  { value: "moderate", label: "Moderate", description: "Regular walks or play" },
-                  { value: "active", label: "Active", description: "Daily exercise" },
-                  { value: "very_active", label: "Very active", description: "Working or sport dog" },
-                ]}
+                options={
+                  data.species === "bird"
+                    ? [
+                        { value: "low", label: "Low", description: "Mostly perching, limited flight" },
+                        { value: "moderate", label: "Moderate", description: "Regular out-of-cage time" },
+                        { value: "active", label: "Active", description: "Daily flight and play" },
+                        { value: "very_active", label: "Very active", description: "Extended flight/enrichment" },
+                      ]
+                    : [
+                        { value: "low", label: "Low", description: "Mostly resting, short walks" },
+                        { value: "moderate", label: "Moderate", description: "Regular walks or play" },
+                        { value: "active", label: "Active", description: "Daily exercise" },
+                        { value: "very_active", label: "Very active", description: "Working or sport dog" },
+                      ]
+                }
               />
             </div>
+            {data.species !== "bird" ? (
+            <>
             <div className="space-y-2">
               <Label>Body condition *</Label>
               <SegmentedSelector
@@ -372,6 +416,8 @@ export function PreSignupWizard() {
                 ]}
               />
             </div>
+            </>
+            ) : null}
           </CardContent>
         </Card>
       )}
@@ -500,6 +546,7 @@ export function PreSignupWizard() {
             </ul>
 
             {preview ? (
+              "merKcalMin" in preview ? (
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border bg-card p-4">
                   <p className="text-xs text-muted-foreground">Daily calories</p>
@@ -510,13 +557,27 @@ export function PreSignupWizard() {
                   <p className="font-display text-xl font-semibold">{preview.recommendedMealsPerDay}</p>
                 </div>
               </div>
+              ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Suggested pellets</p>
+                  <p className="font-display text-xl font-semibold">
+                    {preview.suggestedPelletPercent.min}–{preview.suggestedPelletPercent.max}%
+                  </p>
+                </div>
+                <div className="rounded-2xl border bg-card p-4">
+                  <p className="text-xs text-muted-foreground">Vegetables/greens</p>
+                  <p className="font-display text-xl font-semibold">≥ {preview.suggestedVegetablePercentMin}%</p>
+                </div>
+              </div>
+              )
             ) : null}
 
-            {preview?.mealSchedule?.length ? (
+            {preview && "mealSchedule" in preview && preview.mealSchedule?.length ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Example feeding schedule</p>
                 <ul className="space-y-1 text-sm text-muted-foreground">
-                  {preview.mealSchedule.map((meal) => (
+                  {preview.mealSchedule.map((meal: { mealIndex: number; time: string; calories: number }) => (
                     <li key={meal.mealIndex}>{meal.time} — {meal.calories} kcal</li>
                   ))}
                 </ul>
@@ -536,8 +597,12 @@ export function PreSignupWizard() {
               </div>
             </div>
 
-            <AlertBanner variant={preview?.elevatedVetWarning ? "warning" : "info"}>
-              {preview?.safetyNotice ?? "This plan is an estimate for general guidance."}
+            <AlertBanner variant={preview && "elevatedVetWarning" in preview && preview.elevatedVetWarning ? "warning" : "info"}>
+              {preview && "safetyNotice" in preview
+                ? preview.safetyNotice
+                : preview && "avianVetDisclaimer" in preview
+                  ? preview.avianVetDisclaimer
+                  : "This plan is an estimate for general guidance."}
             </AlertBanner>
 
             <Button onClick={goToSignup} className="w-full rounded-2xl" size="lg">

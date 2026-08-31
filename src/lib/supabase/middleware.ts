@@ -49,6 +49,9 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/home") ||
     pathname.startsWith("/health") ||
     pathname.startsWith("/care") ||
+    pathname.startsWith("/care-plan") ||
+    pathname.startsWith("/reports") ||
+    pathname.startsWith("/upgrade") ||
     pathname.startsWith("/ai") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/settings") ||
