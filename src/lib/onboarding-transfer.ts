@@ -187,3 +187,20 @@ export async function transferOnboardingDraft(
 
   return { petId: pet.id, petName: pet.name };
 }
+
+/** Always creates a new pet — use when adding another pet from the logged-in app. */
+export async function createPetFromOnboardingDraft(
+  supabase: SupabaseClient,
+  user: User,
+  draft: OnboardingDraftData
+): Promise<{ petId: string; petName: string }> {
+  await ensureProfile(supabase, user);
+
+  const petService = new PetService(supabase);
+  const payload = buildPetPayloadFromDraft(draft, user.id);
+  const pet = await petService.create(payload);
+
+  await syncDraftDetails(supabase, user.id, pet.id, draft);
+
+  return { petId: pet.id, petName: pet.name };
+}
