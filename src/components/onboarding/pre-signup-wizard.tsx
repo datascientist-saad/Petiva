@@ -20,11 +20,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { AnalyticsEvents } from "@/lib/analytics/events";
 import { SUPPORTED_SPECIES } from "@/lib/species/registry";
 import { BIRD_SPECIES_OPTIONS } from "@/lib/species/bird-breeds";
 import { brand } from "@/lib/brand";
 import { breedsForSpecies } from "@/lib/breeds";
 import { calculatePetAge, speciesEmoji } from "@/lib/calculations";
+import { createClient } from "@/lib/supabase/client";
+import { toUserMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { validateMixedFeedingPercent } from "@/lib/diet-calculations";
 import {
@@ -33,6 +36,8 @@ import {
   resetOnboardingDraft,
   saveOnboardingDraft,
 } from "@/lib/onboarding-draft";
+import { createPetFromOnboardingDraft } from "@/lib/onboarding-transfer";
+import { AnalyticsService } from "@/services/notification-service";
 import {
   HEALTH_CONDITION_OPTIONS,
   initialOnboardingDraft,
@@ -41,6 +46,13 @@ import {
 
 const STEPS = ["Welcome", "Pet basics", "Body & lifestyle", "Diet", "Preview"];
 const TOTAL_STEPS = 5;
+
+export type OnboardingWizardMode = "pre-signup" | "authenticated";
+
+interface PreSignupWizardProps {
+  mode?: OnboardingWizardMode;
+  onPetSaved?: (petId: string) => Promise<void>;
+}
 
 function stepKey(index: number): OnboardingDraftData["step"] {
   return STEPS[index].toLowerCase().replace(/ & /g, "_").replace(/ /g, "_") as OnboardingDraftData["step"];
@@ -105,18 +117,26 @@ function withStepMeta(next: OnboardingDraftData, nextStep: number): OnboardingDr
   };
 }
 
-export function PreSignupWizard() {
+export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWizardProps) {
   const router = useRouter();
-  const [step, setStep] = useState(0);
+  const isAuthenticatedFlow = mode === "authenticated";
+  const firstStep = isAuthenticatedFlow ? 1 : 0;
+  const [step, setStep] = useState(firstStep);
   const [data, setData] = useState<OnboardingDraftData>(initialOnboardingDraft);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (isAuthenticatedFlow) {
+      setData(initialOnboardingDraft());
+      setStep(1);
+      return;
+    }
     const saved = loadOnboardingDraft();
     if (saved) {
       setData(saved);
       setStep(saved.stepIndex ?? 0);
     }
-  }, []);
+  }, [isAuthenticatedFlow]);
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const breeds = breedsForSpecies(data.species);
@@ -132,9 +152,19 @@ export function PreSignupWizard() {
   function update(patch: Partial<OnboardingDraftData>) {
     setData((current) => {
       const draft = withStepMeta({ ...current, ...patch }, step);
-      saveOnboardingDraft(draft);
+      if (!isAuthenticatedFlow) {
+        saveOnboardingDraft(draft);
+      }
       return draft;
     });
+  }
+
+  function persistDraft(nextData: OnboardingDraftData, nextStep: number) {
+    const draft = withStepMeta(nextData, nextStep);
+    if (!isAuthenticatedFlow) {
+      saveOnboardingDraft(draft);
+    }
+    return draft;
   }
 
   function next() {
@@ -146,37 +176,69 @@ export function PreSignupWizard() {
         nextStep === TOTAL_STEPS - 1
           ? { ...current, diet_preview: buildDietPreviewFromDraft(current) }
           : current;
-      const draft = withStepMeta(nextData, nextStep);
-      saveOnboardingDraft(draft);
+      const draft = persistDraft(nextData, nextStep);
       setStep(nextStep);
       return draft;
     });
   }
 
   function back() {
-    const prev = Math.max(step - 1, 0);
-    setData((current) => {
-      const draft = withStepMeta(current, prev);
-      saveOnboardingDraft(draft);
-      return draft;
-    });
+    const prev = Math.max(step - 1, firstStep);
+    setData((current) => persistDraft(current, prev));
     setStep(prev);
   }
 
   function restart() {
-    const fresh = resetOnboardingDraft();
+    const fresh = initialOnboardingDraft();
+    if (!isAuthenticatedFlow) {
+      resetOnboardingDraft();
+    }
     setData(fresh);
-    setStep(0);
-    toast.message("Onboarding restarted.");
+    setStep(firstStep);
+    toast.message(isAuthenticatedFlow ? "Form cleared." : "Onboarding restarted.");
+  }
+
+  async function saveAuthenticatedPet() {
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Please sign in to continue.");
+
+      const draft = withStepMeta(
+        { ...data, diet_preview: buildDietPreviewFromDraft(data) },
+        step
+      );
+      const { petId, petName } = await createPetFromOnboardingDraft(supabase, user, draft);
+
+      const analytics = new AnalyticsService(supabase);
+      await analytics.track(AnalyticsEvents.PET_CREATED, user.id, petId, {
+        species: draft.species,
+        source: "authenticated_onboarding",
+      });
+      await analytics.track(AnalyticsEvents.FIRST_DIET_PLAN, user.id, petId, {
+        species: draft.species,
+      });
+
+      localStorage.setItem("animivo_selected_pet", petId);
+      await onPetSaved?.(petId);
+      toast.success(`${petName} is ready!`);
+      router.replace("/home");
+    } catch (err) {
+      toast.error(toUserMessage(err, "Could not save your pet profile."));
+    } finally {
+      setSaving(false);
+    }
   }
 
   function goToSignup() {
     setData((current) => {
-      const draft = withStepMeta(
+      const draft = persistDraft(
         { ...current, diet_preview: buildDietPreviewFromDraft(current) },
         step
       );
-      saveOnboardingDraft(draft);
       router.push("/signup");
       return draft;
     });
@@ -194,6 +256,13 @@ export function PreSignupWizard() {
         showStickyNav && "pb-24",
       )}
     >
+      {isAuthenticatedFlow && step >= 1 ? (
+        <div className="mb-2 text-center">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Add a pet</p>
+          <h1 className="font-display text-xl font-semibold">{brand.name}</h1>
+        </div>
+      ) : null}
+
       {step > 0 ? (
         <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
@@ -428,6 +497,85 @@ export function PreSignupWizard() {
             <CardTitle className="font-display text-xl sm:text-2xl">Diet information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 px-4 pb-5 sm:px-6 sm:pb-6">
+            {data.species === "bird" ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Estimate your bird&apos;s current daily diet mix. Percentages should add up to roughly 100%.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Pellets % *</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={data.species_profile.pellet_percent}
+                      onChange={(e) =>
+                        update({
+                          species_profile: { ...data.species_profile, pellet_percent: e.target.value },
+                        })
+                      }
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Seeds %</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={data.species_profile.seed_percent}
+                      onChange={(e) =>
+                        update({
+                          species_profile: { ...data.species_profile, seed_percent: e.target.value },
+                        })
+                      }
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vegetables/greens % *</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={data.species_profile.vegetable_percent}
+                      onChange={(e) =>
+                        update({
+                          species_profile: { ...data.species_profile, vegetable_percent: e.target.value },
+                        })
+                      }
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fruit %</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={data.species_profile.fruit_percent}
+                      onChange={(e) =>
+                        update({
+                          species_profile: { ...data.species_profile, fruit_percent: e.target.value },
+                        })
+                      }
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Primary care goal</Label>
+                  <Input
+                    value={data.primary_goal}
+                    onChange={(e) => update({ primary_goal: e.target.value })}
+                    placeholder="e.g. Improve diet balance"
+                    className="rounded-xl"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
             <div className="space-y-2">
               <Label>Current food type *</Label>
               <SegmentedSelector
@@ -494,6 +642,8 @@ export function PreSignupWizard() {
                 <Input type="number" value={data.calories_per_serving} onChange={(e) => update({ calories_per_serving: e.target.value })} className="rounded-xl" />
               </div>
             </div>
+              </>
+            )}
             <div className="space-y-2">
               <Label>Known allergies</Label>
               <Input value={data.allergies} onChange={(e) => update({ allergies: e.target.value })} placeholder="Chicken, beef (comma-separated)" className="rounded-xl" />
@@ -588,13 +738,15 @@ export function PreSignupWizard() {
               <p className="text-sm font-medium">Full plan includes</p>
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground blur-[2px]">
                 <li>Detailed portion breakdown</li>
-                <li>Dry/wet food quantities</li>
+                <li>{data.species === "bird" ? "Composition guidance" : "Dry/wet food quantities"}</li>
                 <li>Feeding reminders</li>
                 <li>Future weight-based adjustments</li>
               </ul>
-              <div className="absolute inset-0 flex items-center justify-center bg-background/40">
-                <p className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">🔒 Save to unlock</p>
-              </div>
+              {!isAuthenticatedFlow ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/40">
+                  <p className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">🔒 Save to unlock</p>
+                </div>
+              ) : null}
             </div>
 
             <AlertBanner variant={preview && "elevatedVetWarning" in preview && preview.elevatedVetWarning ? "warning" : "info"}>
@@ -605,9 +757,20 @@ export function PreSignupWizard() {
                   : "This plan is an estimate for general guidance."}
             </AlertBanner>
 
-            <Button onClick={goToSignup} className="w-full rounded-2xl" size="lg">
-              Create a free account to save the full plan
-            </Button>
+            {isAuthenticatedFlow ? (
+              <Button
+                onClick={() => void saveAuthenticatedPet()}
+                disabled={saving}
+                className="w-full rounded-2xl"
+                size="lg"
+              >
+                {saving ? "Saving…" : `Save ${data.name || "pet"}'s care plan`}
+              </Button>
+            ) : (
+              <Button onClick={goToSignup} className="w-full rounded-2xl" size="lg">
+                Create a free account to save the full plan
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
