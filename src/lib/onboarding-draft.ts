@@ -12,7 +12,19 @@ import {
 
 function migrateLegacyDraft(raw: Record<string, unknown>): OnboardingDraftData {
   const fresh = initialOnboardingDraft();
-  const merged = { ...fresh, ...raw, version: 2 as const };
+  const incomingProfile =
+    raw.species_profile && typeof raw.species_profile === "object" && !Array.isArray(raw.species_profile)
+      ? (raw.species_profile as Record<string, unknown>)
+      : {};
+  const merged = {
+    ...fresh,
+    ...raw,
+    version: 2 as const,
+    species_profile: {
+      ...fresh.species_profile,
+      ...incomingProfile,
+    },
+  };
   const estimatedMonths =
     Number(raw.estimated_age_years || 0) * 12 + Number(raw.estimated_age_months || 0);
   if (!merged.life_stage) {
@@ -154,21 +166,25 @@ export function draftToWeightGrams(draft: OnboardingDraftData): number | null {
 }
 
 export function draftToBirdNutritionInput(draft: OnboardingDraftData) {
+  const profile = {
+    ...initialOnboardingDraft().species_profile,
+    ...(draft.species_profile ?? {}),
+  };
   const weightGrams = draftToWeightGrams(draft) ?? 0;
   const ageMonths = draftToAgeMonths(draft) ?? 0;
 
   return {
-    birdSpecies: draft.species_profile.bird_species || draft.breed || "Other companion bird",
+    birdSpecies: profile.bird_species || draft.breed || "Other companion bird",
     weightGrams,
     ageMonths,
     activityLevel: (draft.activity_level || "moderate") as "low" | "moderate" | "active" | "very_active",
-    pelletPercentCurrent: Number(draft.species_profile.pellet_percent) || null,
-    seedPercentCurrent: Number(draft.species_profile.seed_percent) || null,
-    vegetablePercentCurrent: Number(draft.species_profile.vegetable_percent) || null,
-    fruitPercentCurrent: Number(draft.species_profile.fruit_percent) || null,
-    eggLaying: draft.species_profile.egg_laying,
-    featherPluckingHistory: draft.species_profile.feather_plucking_history,
-    healthFlags: draft.health_conditions,
+    pelletPercentCurrent: Number(profile.pellet_percent) || null,
+    seedPercentCurrent: Number(profile.seed_percent) || null,
+    vegetablePercentCurrent: Number(profile.vegetable_percent) || null,
+    fruitPercentCurrent: Number(profile.fruit_percent) || null,
+    eggLaying: Boolean(profile.egg_laying),
+    featherPluckingHistory: Boolean(profile.feather_plucking_history),
+    healthFlags: draft.health_conditions ?? [],
   };
 }
 
@@ -218,7 +234,11 @@ export function draftToDietInput(draft: OnboardingDraftData): DietCalculationInp
 
 export function buildDietPreviewFromDraft(draft: OnboardingDraftData) {
   if (draft.species === "bird") {
-    return calculateBirdNutrition(draftToBirdNutritionInput(draft));
+    try {
+      return calculateBirdNutrition(draftToBirdNutritionInput(draft));
+    } catch {
+      return null;
+    }
   }
   const input = draftToDietInput(draft);
   if (!input) return null;

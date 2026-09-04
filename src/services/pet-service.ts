@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AppError } from "@/lib/errors";
+import { nextPetWriteAttempt } from "@/lib/pet-write";
 import type { Allergy, Condition, Pet, PetWithDetails } from "@/types/database";
 
 export class PetService {
@@ -55,8 +56,24 @@ export class PetService {
   }
 
   async create(input: Partial<Pet> & { name: string; species: string; owner_id: string }) {
-    const { error } = await this.supabase.from("pets").insert(input);
-    if (error) throw new AppError(`Something went wrong while creating ${input.name}'s profile.`, { cause: error });
+    let attempt: Record<string, unknown> = { ...input };
+    let lastError: unknown = null;
+
+    for (let round = 0; round < 8; round += 1) {
+      const { error } = await this.supabase.from("pets").insert(attempt);
+      if (!error) {
+        lastError = null;
+        break;
+      }
+      lastError = error;
+      const next = nextPetWriteAttempt(attempt, error);
+      if (!next) break;
+      attempt = next;
+    }
+
+    if (lastError) {
+      throw new AppError(`Something went wrong while creating ${input.name}'s profile.`, { cause: lastError });
+    }
 
     const { data, error: fetchError } = await this.supabase
       .from("pets")
@@ -77,14 +94,27 @@ export class PetService {
   }
 
   async update(petId: string, input: Partial<Pet>) {
-    const { data, error } = await this.supabase
-      .from("pets")
-      .update(input)
-      .eq("id", petId)
-      .select("*")
-      .single();
-    if (error) throw new AppError("Could not update pet profile.", { cause: error });
-    return data as Pet;
+    let attempt: Record<string, unknown> = { ...input };
+    let lastError: unknown = null;
+    let data: Pet | null = null;
+
+    for (let round = 0; round < 8; round += 1) {
+      const result = await this.supabase.from("pets").update(attempt).eq("id", petId).select("*").single();
+      if (!result.error) {
+        data = result.data as Pet;
+        lastError = null;
+        break;
+      }
+      lastError = result.error;
+      const next = nextPetWriteAttempt(attempt, result.error);
+      if (!next) break;
+      attempt = next;
+    }
+
+    if (lastError || !data) {
+      throw new AppError("Could not update pet profile.", { cause: lastError });
+    }
+    return data;
   }
 
   async delete(petId: string) {

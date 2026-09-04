@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AppError } from "@/lib/errors";
+import { AppError, errorText } from "@/lib/errors";
 import {
   calculateDietPlan,
   type DietCalculationInput,
@@ -176,25 +176,49 @@ export class DietPlanService {
     const reviewBy = new Date();
     reviewBy.setDate(reviewBy.getDate() + 14);
 
-    const { data, error } = await this.supabase
-      .from("diet_plans")
-      .insert({
-        pet_id: petId,
-        created_by: userId,
-        version: nextVersion,
-        is_current: true,
-        engine_type: "bird",
-        engine_version: NUTRITION_ENGINE_VERSION,
-        inputs: input,
-        result,
-        owner_notes: options?.ownerNotes ?? null,
-        review_by: reviewBy.toISOString().slice(0, 10),
-      })
-      .select("*")
-      .single();
+    let row: Record<string, unknown> = {
+      pet_id: petId,
+      created_by: userId,
+      version: nextVersion,
+      is_current: true,
+      engine_type: "bird",
+      engine_version: NUTRITION_ENGINE_VERSION,
+      inputs: input,
+      result,
+      owner_notes: options?.ownerNotes ?? null,
+      review_by: reviewBy.toISOString().slice(0, 10),
+    };
 
-    if (error) throw new AppError("Could not save bird diet plan.", { cause: error });
-    return data as DietPlan;
+    let lastError: unknown = null;
+    let data: DietPlan | null = null;
+    for (let round = 0; round < 4; round += 1) {
+      const inserted = await this.supabase.from("diet_plans").insert(row).select("*").single();
+      if (!inserted.error) {
+        data = inserted.data as DietPlan;
+        lastError = null;
+        break;
+      }
+      lastError = inserted.error;
+      const text = errorText(inserted.error);
+      if (/engine_type/i.test(text) && "engine_type" in row) {
+        const next = { ...row };
+        delete next.engine_type;
+        row = next;
+        continue;
+      }
+      if (/engine_version/i.test(text) && "engine_version" in row) {
+        const next = { ...row };
+        delete next.engine_version;
+        row = next;
+        continue;
+      }
+      break;
+    }
+
+    if (lastError || !data) {
+      throw new AppError("Could not save bird diet plan.", { cause: lastError });
+    }
+    return data;
   }
 
   async getTodayFeedingCompletions(petId: string, date = new Date()) {

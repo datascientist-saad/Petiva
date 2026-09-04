@@ -25,11 +25,11 @@ export const profileUpdateSchema = z.object({
 
 export const petBasicSchema = z.object({
   name: z.string().min(1, "Pet name is required").max(60),
-  species: z.enum(["cat", "dog"]),
+  species: z.enum(["cat", "dog", "bird"]),
   breed: z.string().max(80).optional().nullable(),
   birth_date: z.string().optional().nullable(),
   estimated_age_months: z.coerce.number().int().min(0).max(400).optional().nullable(),
-  sex: z.enum(["male", "female"]).optional().nullable(),
+  sex: z.enum(["male", "female", "unknown"]).optional().nullable(),
   profile_image_url: z.string().url().optional().nullable(),
 });
 

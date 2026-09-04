@@ -44,7 +44,8 @@ export function validateOnboardingStep(
 
   if (step === 2) {
     if (draft.species === "bird") {
-      if (!draft.species_profile.pellet_percent || !draft.species_profile.vegetable_percent) {
+      const profile = draft.species_profile;
+      if (!profile?.pellet_percent || !profile?.vegetable_percent) {
         errors.pellet_percent = "Enter the current diet mix so we can organize care tracking.";
       }
     } else {

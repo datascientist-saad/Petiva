@@ -334,13 +334,21 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                 id="species"
                 ariaLabel="Pet type"
                 value={data.species}
-                onChange={(v) =>
+                onChange={(v) => {
+                  const nextSpecies = v as OnboardingDraftData["species"];
+                  const crossingBird =
+                    nextSpecies === "bird" || data.species === "bird";
                   update({
-                    species: v as OnboardingDraftData["species"],
+                    species: nextSpecies,
                     breed: "",
-                    weight_unit: v === "bird" ? "g" : data.weight_unit === "g" ? "kg" : data.weight_unit,
-                  })
-                }
+                    weight_unit: nextSpecies === "bird" ? "g" : data.weight_unit === "g" ? "kg" : data.weight_unit,
+                    weight_value: crossingBird && nextSpecies !== data.species ? "" : data.weight_value,
+                    species_profile: {
+                      ...initialOnboardingDraft().species_profile,
+                      ...(data.species_profile ?? {}),
+                    },
+                  });
+                }}
                 options={SUPPORTED_SPECIES.map((s) => ({
                   value: s.id,
                   label: `${s.icon} ${s.displayName}`,
@@ -353,10 +361,19 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                 <span className="font-normal text-muted-foreground">(optional)</span>
               </Label>
               <Select
-                value={data.species === "bird" ? data.species_profile.bird_species : data.breed}
+                value={
+                  (data.species === "bird" ? data.species_profile?.bird_species : data.breed) || undefined
+                }
                 onValueChange={(v) =>
                   data.species === "bird"
-                    ? update({ species_profile: { ...data.species_profile, bird_species: v }, breed: v })
+                    ? update({
+                        species_profile: {
+                          ...initialOnboardingDraft().species_profile,
+                          ...(data.species_profile ?? {}),
+                          bird_species: v,
+                        },
+                        breed: v,
+                      })
                     : update({ breed: v })
                 }
               >
@@ -577,10 +594,14 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                       type="number"
                       min={0}
                       max={100}
-                      value={data.species_profile.pellet_percent}
+                      value={data.species_profile?.pellet_percent ?? ""}
                       onChange={(e) =>
                         update({
-                          species_profile: { ...data.species_profile, pellet_percent: e.target.value },
+                          species_profile: {
+                            ...initialOnboardingDraft().species_profile,
+                            ...(data.species_profile ?? {}),
+                            pellet_percent: e.target.value,
+                          },
                         })
                       }
                       className="min-h-11 rounded-xl"
@@ -595,10 +616,14 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                       type="number"
                       min={0}
                       max={100}
-                      value={data.species_profile.seed_percent}
+                      value={data.species_profile?.seed_percent ?? ""}
                       onChange={(e) =>
                         update({
-                          species_profile: { ...data.species_profile, seed_percent: e.target.value },
+                          species_profile: {
+                            ...initialOnboardingDraft().species_profile,
+                            ...(data.species_profile ?? {}),
+                            seed_percent: e.target.value,
+                          },
                         })
                       }
                       className="min-h-11 rounded-xl"
@@ -611,10 +636,14 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                       type="number"
                       min={0}
                       max={100}
-                      value={data.species_profile.vegetable_percent}
+                      value={data.species_profile?.vegetable_percent ?? ""}
                       onChange={(e) =>
                         update({
-                          species_profile: { ...data.species_profile, vegetable_percent: e.target.value },
+                          species_profile: {
+                            ...initialOnboardingDraft().species_profile,
+                            ...(data.species_profile ?? {}),
+                            vegetable_percent: e.target.value,
+                          },
                         })
                       }
                       className="min-h-11 rounded-xl"
@@ -629,10 +658,14 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                       type="number"
                       min={0}
                       max={100}
-                      value={data.species_profile.fruit_percent}
+                      value={data.species_profile?.fruit_percent ?? ""}
                       onChange={(e) =>
                         update({
-                          species_profile: { ...data.species_profile, fruit_percent: e.target.value },
+                          species_profile: {
+                            ...initialOnboardingDraft().species_profile,
+                            ...(data.species_profile ?? {}),
+                            fruit_percent: e.target.value,
+                          },
                         })
                       }
                       className="min-h-11 rounded-xl"
@@ -715,7 +748,7 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                   <div className="space-y-2">
                     <Label htmlFor="diet_goal">Diet goal</Label>
                     <Select
-                      value={data.diet_goal}
+                      value={data.diet_goal || undefined}
                       onValueChange={(v) => update({ diet_goal: v as OnboardingDraftData["diet_goal"] })}
                     >
                       <SelectTrigger id="diet_goal" className="min-h-11 rounded-xl">
@@ -764,7 +797,7 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                     Package calories <span className="font-normal text-muted-foreground">(optional)</span>
                   </Label>
                   <Select
-                    value={data.calorie_unit}
+                    value={data.calorie_unit || undefined}
                     onValueChange={(v) => update({ calorie_unit: v as OnboardingDraftData["calorie_unit"] })}
                   >
                     <SelectTrigger id="calorie_unit" className="min-h-11 rounded-xl">
