@@ -2,18 +2,37 @@ import { errorText } from "@/lib/errors";
 
 const REQUIRED_PET_COLUMNS = new Set(["name", "species", "owner_id"]);
 
+/** Columns added after the original pets table. Safe to insert without, then patch. */
+export const OPTIONAL_PET_INSERT_COLUMNS = ["life_stage"] as const;
+
 function withoutKey<T extends object>(input: T, key: keyof T): T {
   const next = { ...input };
   delete next[key];
   return next;
 }
 
-function missingColumnName(text: string): string | null {
+export function missingColumnName(text: string): string | null {
   const match =
     text.match(/Could not find the ['"]([^'"]+)['"] column/i) ||
     text.match(/column ['"]([^'"]+)['"] does not exist/i) ||
+    text.match(/column (?:[\w]+\.)+([\w]+) does not exist/i) ||
     text.match(/column ([a-z_]+) does not exist/i);
   return match?.[1] ?? null;
+}
+
+export function stripOptionalPetInsertColumns<T extends Record<string, unknown>>(input: T): {
+  core: T;
+  extra: Partial<T>;
+} {
+  const core = { ...input };
+  const extra: Partial<T> = {};
+  for (const key of OPTIONAL_PET_INSERT_COLUMNS) {
+    if (key in core) {
+      extra[key as keyof T] = core[key as keyof T];
+      delete core[key as keyof T];
+    }
+  }
+  return { core, extra };
 }
 
 /**

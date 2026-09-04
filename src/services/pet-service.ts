@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AppError } from "@/lib/errors";
-import { nextPetWriteAttempt } from "@/lib/pet-write";
+import { AppError, logError } from "@/lib/errors";
+import { nextPetWriteAttempt, stripOptionalPetInsertColumns } from "@/lib/pet-write";
 import type { Allergy, Condition, Pet, PetWithDetails } from "@/types/database";
 
 export class PetService {
@@ -56,7 +56,10 @@ export class PetService {
   }
 
   async create(input: Partial<Pet> & { name: string; species: string; owner_id: string }) {
-    let attempt: Record<string, unknown> = { ...input };
+    // Production is missing pets.life_stage until that migration is applied.
+    // Insert the core row first, then patch optional columns if the schema has them.
+    const { core, extra } = stripOptionalPetInsertColumns({ ...input } as Record<string, unknown>);
+    let attempt: Record<string, unknown> = core;
     let lastError: unknown = null;
 
     for (let round = 0; round < 8; round += 1) {
@@ -67,7 +70,7 @@ export class PetService {
       }
       lastError = error;
       const next = nextPetWriteAttempt(attempt, error);
-      if (!next) break;
+      if (!next || Object.keys(next).length === 0) break;
       attempt = next;
     }
 
@@ -90,7 +93,15 @@ export class PetService {
       });
     }
 
-    return data as Pet;
+    const extraKeys = Object.keys(extra).filter((key) => extra[key] !== undefined);
+    if (extraKeys.length === 0) return data as Pet;
+
+    try {
+      return await this.update(data.id, extra as Partial<Pet>);
+    } catch (error) {
+      logError("pet-optional-columns", error);
+      return data as Pet;
+    }
   }
 
   async update(petId: string, input: Partial<Pet>) {
@@ -99,6 +110,7 @@ export class PetService {
     let data: Pet | null = null;
 
     for (let round = 0; round < 8; round += 1) {
+      if (Object.keys(attempt).length === 0) break;
       const result = await this.supabase.from("pets").update(attempt).eq("id", petId).select("*").single();
       if (!result.error) {
         data = result.data as Pet;
@@ -107,7 +119,7 @@ export class PetService {
       }
       lastError = result.error;
       const next = nextPetWriteAttempt(attempt, result.error);
-      if (!next) break;
+      if (!next || Object.keys(next).length === 0) break;
       attempt = next;
     }
 

@@ -36,6 +36,9 @@ function mappedConstraintMessage(error: unknown): string | null {
   if (/pets_weight_unit_check|violates check constraint.*weight_unit/i.test(text)) {
     return "Bird weight in grams could not be saved. Apply the latest database migration and try again.";
   }
+  if (/life_stage/i.test(text) && /does not exist|schema cache/i.test(text)) {
+    return "Pet profiles need a database update (missing life_stage). Run supabase/migrations/20260904000000_pets_life_stage.sql in the Supabase SQL editor.";
+  }
   if (record?.cause) return mappedConstraintMessage(record.cause);
   return null;
 }

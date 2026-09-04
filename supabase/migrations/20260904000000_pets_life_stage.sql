@@ -1,5 +1,11 @@
 -- Add explicit life-stage support for unknown-age pets.
 -- Safe for existing rows: new column is nullable and does not rewrite birth dates.
+--
+-- Production (tqfxsxwqxidcsmlstbjf) is missing this column. Until it is applied,
+-- every pet insert that sends life_stage fails with:
+--   column pets.life_stage does not exist
+-- Paste this file into the Supabase SQL editor if the dashboard shows no
+-- migration history (SQL applied by hand is not recorded there).
 
 alter table public.pets
   add column if not exists life_stage text;
