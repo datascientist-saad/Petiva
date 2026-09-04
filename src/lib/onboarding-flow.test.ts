@@ -143,4 +143,32 @@ describe("legacy unknown-age drafts", () => {
     expect(preview && "assumptions" in preview ? preview.assumptions.join(" ") : "").toMatch(/adult/i);
     expect(draft.life_stage).not.toBe("baby");
   });
+
+  it("restores bird species_profile when a saved draft had null extras", () => {
+    saveOnboardingDraft({
+      ...initialOnboardingDraft(),
+      name: "Kiwi",
+      species: "bird",
+      species_profile: null as never,
+    });
+    const restored = loadOnboardingDraft();
+    expect(restored?.species_profile.pellet_percent).toBe("70");
+    expect(() => buildDietPreviewFromDraft(restored!)).not.toThrow();
+  });
+});
+
+describe("bird plan preview", () => {
+  it("does not throw when species_profile is missing and does not reuse mammal calories", () => {
+    const draft = initialOnboardingDraft();
+    draft.species = "bird";
+    draft.weight_value = "350";
+    draft.weight_unit = "g";
+    draft.activity_level = "moderate";
+    draft.species_profile = undefined as never;
+    const preview = buildDietPreviewFromDraft(draft);
+    expect(preview && "calorieCalculationAvailable" in preview ? preview.calorieCalculationAvailable : true).toBe(
+      false
+    );
+    expect(preview && "merKcal" in preview).toBe(false);
+  });
 });
