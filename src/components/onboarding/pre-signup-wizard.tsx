@@ -331,6 +331,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">Pet type</legend>
               <SegmentedSelector
+                id="species"
+                ariaLabel="Pet type"
                 value={data.species}
                 onChange={(v) =>
                   update({
@@ -408,6 +410,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
               <fieldset className="space-y-2">
                 <legend className="text-sm font-medium">Approximate life stage</legend>
                 <SegmentedSelector
+                  id="life_stage"
+                  ariaLabel="Approximate life stage"
                   value={data.life_stage}
                   onChange={(v) => update({ life_stage: v as OnboardingDraftData["life_stage"] })}
                   options={lifeStageOptions(data.species)}
@@ -429,6 +433,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                 Sex <span className="font-normal text-muted-foreground">(optional)</span>
               </legend>
               <SegmentedSelector
+                id="sex"
+                ariaLabel="Sex"
                 value={data.sex}
                 onChange={(v) => update({ sex: v })}
                 options={[
@@ -476,6 +482,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                 <fieldset className="space-y-2">
                   <legend className="text-sm font-medium">Unit</legend>
                   <SegmentedSelector
+                    id="weight_unit"
+                    ariaLabel="Weight unit"
                     value={data.weight_unit}
                     onChange={(v) => update({ weight_unit: v })}
                     options={[
@@ -489,6 +497,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">Activity level</legend>
               <SegmentedSelector
+                id="activity_level"
+                ariaLabel="Activity level"
                 value={data.activity_level}
                 onChange={(v) => update({ activity_level: v })}
                 columns={2}
@@ -505,6 +515,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                 <fieldset className="space-y-2">
                   <legend className="text-sm font-medium">Body condition</legend>
                   <SegmentedSelector
+                    id="body_condition"
+                    ariaLabel="Body condition"
                     value={data.body_condition}
                     onChange={(v) => update({ body_condition: v })}
                     columns={2}
@@ -527,6 +539,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                     <span className="font-normal text-muted-foreground">(optional)</span>
                   </legend>
                   <SegmentedSelector
+                    id="neutered"
+                    ariaLabel="Neutered or spayed"
                     value={data.neutered}
                     onChange={(v) => update({ neutered: v })}
                     columns={3}
@@ -648,6 +662,8 @@ export function PreSignupWizard({ mode = "pre-signup", onPetSaved }: PreSignupWi
                 <fieldset className="space-y-2">
                   <legend className="text-sm font-medium">Current food type</legend>
                   <SegmentedSelector
+                    id="food_type"
+                    ariaLabel="Current food type"
                     value={data.food_type}
                     onChange={(v) => update({ food_type: v })}
                     columns={2}
