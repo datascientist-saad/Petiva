@@ -10,6 +10,7 @@ const basePet: Pet = {
   breed: "Budgie",
   birth_date: null,
   estimated_age_months: 12,
+  life_stage: "adult",
   sex: "unknown",
   neutered: "unknown",
   weight_kg: 0.035,

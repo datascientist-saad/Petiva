@@ -82,6 +82,10 @@ export function AddRecordDialog({ petId, open, onOpenChange, onSuccess }: AddRec
           toast.error("Please upload a PDF, JPG, or PNG file.");
           return;
         }
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error("Please choose a file smaller than 10 MB.");
+          return;
+        }
         const path = `${user.id}/${petId}/${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage
           .from("medical-files")

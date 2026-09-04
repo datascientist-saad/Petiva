@@ -4,7 +4,7 @@ import { supabasePublicDefaults } from "@/lib/supabase/public-config";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
-    return [{ source: "/get-started", destination: "/", permanent: true }];
+    return [];
   },
   images: {
     remotePatterns: [
@@ -19,9 +19,7 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_SUPABASE_URL || supabasePublicDefaults.url,
     NEXT_PUBLIC_SUPABASE_ANON_KEY:
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || supabasePublicDefaults.anonKey,
-    NEXT_PUBLIC_APP_URL:
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://animivo.vercel.app"),
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "https://animivo.app",
   },
 };
 

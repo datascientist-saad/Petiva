@@ -99,7 +99,7 @@ Every pet-scoped table uses `user_has_pet_access(pet_id)` or owner helpers. Care
 
 ## Nutrition engine
 
-- **Cats & dogs:** RER/MER-based deterministic calculator in `src/lib/diet-calculations.ts`
+- **Cats & dogs:** RER/MER-based deterministic calculator in `src/lib/nutrition/mammal-calculator.ts`
 - **Birds:** Separate composition model in `src/lib/nutrition/bird-calculator.ts` using versioned reference data—never dog/cat calorie equations
 - **Routing:** `src/lib/nutrition/engine.ts` selects the correct engine by species
 - **Versioning:** Diet plans retain full history; adjustments create new versions
@@ -195,4 +195,4 @@ npm test
 
 ## License
 
-Private pilot software — all rights reserved.
+Private software — all rights reserved.

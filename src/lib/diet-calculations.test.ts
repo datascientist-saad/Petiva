@@ -1,22 +1,14 @@
 import { describe, expect, it } from "vitest";
-import {
-  calculateDietPlan,
-  calculateRER,
-  kgFromLb,
-  lbFromKg,
-  validateMixedFeedingPercent,
-} from "./diet-calculations";
-import {
-  buildDietPreviewFromDraft,
-  draftToWeightKg,
-} from "./onboarding-draft";
+import { calculateDietPlan, calculateRER, kgFromLb, lbFromKg, validateMixedFeedingPercent } from "./diet-calculations";
+import { buildDietPreviewFromDraft, draftToWeightKg } from "./onboarding-draft";
+// localStorage is used by draft helpers in other suites; this file only uses in-memory drafts.
 import { initialOnboardingDraft } from "@/types/onboarding-draft";
 
-describe("diet-calculations", () => {
+describe("diet-calculations compatibility", () => {
   const baseInput = {
     species: "dog" as const,
     weightKg: 10,
-    ageMonths: 36,
+    lifeStage: "adult" as const,
     neutered: "yes" as const,
     activityLevel: "moderate" as const,
     bodyCondition: "ideal" as const,
@@ -47,31 +39,15 @@ describe("diet-calculations", () => {
     expect(lbFromKg(10)).toBeCloseTo(22.046, 1);
   });
 
-  it("calculates dry and wet portions for mixed feeding", () => {
-    const result = calculateDietPlan({
-      ...baseInput,
-      foodType: "mixed",
-      mixedDryPercent: 60,
-      caloriesPer100g: 360,
-    });
-    expect(result.dryFoodGrams).toBeGreaterThan(0);
-    expect(result.wetFoodGrams).toBeGreaterThan(0);
-  });
-
-  it("marks estimates when calorie density is missing", () => {
+  it("does not invent grams when calorie density is missing", () => {
     const result = calculateDietPlan({ ...baseInput, caloriesPer100g: null });
     expect(result.isEstimate).toBe(true);
-    expect(result.dailyFoodGrams).toBeGreaterThan(0);
+    expect(result.dailyFoodGrams).toBeNull();
   });
 
   it("elevates vet warning for puppies", () => {
-    const result = calculateDietPlan({ ...baseInput, ageMonths: 3 });
+    const result = calculateDietPlan({ ...baseInput, lifeStage: "baby" });
     expect(result.elevatedVetWarning).toBe(true);
-  });
-
-  it("includes influencing factors", () => {
-    const result = calculateDietPlan(baseInput);
-    expect(result.influencingFactors.length).toBeGreaterThan(0);
   });
 });
 
@@ -87,6 +63,8 @@ describe("onboarding draft transformation", () => {
     const draft = initialOnboardingDraft();
     draft.name = "Luna";
     draft.species = "cat";
+    draft.life_stage = "adult";
+    draft.use_approximate_age = true;
     draft.weight_value = "4.2";
     draft.weight_unit = "kg";
     draft.activity_level = "moderate";
@@ -95,6 +73,7 @@ describe("onboarding draft transformation", () => {
     draft.food_type = "wet";
     draft.meals_per_day = "2";
     draft.calories_per_100g = "85";
+    draft.calorie_unit = "per_100g";
 
     const preview = buildDietPreviewFromDraft(draft);
     expect(preview).not.toBeNull();

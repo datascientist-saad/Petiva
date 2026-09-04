@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 
@@ -28,14 +27,17 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const supabase = createClient();
     let subscription: { unsubscribe: () => void } | undefined;
+    let settled = false;
 
     void supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
+        settled = true;
         setReady(true);
         return;
       }
@@ -44,6 +46,7 @@ export default function ResetPasswordPage() {
         data: { subscription: authSubscription },
       } = supabase.auth.onAuthStateChange((_event, nextSession) => {
         if (nextSession) {
+          settled = true;
           setReady(true);
         }
       });
@@ -51,8 +54,13 @@ export default function ResetPasswordPage() {
       subscription = authSubscription;
     });
 
+    const timeout = window.setTimeout(() => {
+      if (!settled) setExpired(true);
+    }, 8000);
+
     return () => {
       subscription?.unsubscribe();
+      window.clearTimeout(timeout);
     };
   }, []);
 
@@ -81,7 +89,9 @@ export default function ResetPasswordPage() {
       router.replace("/home");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update password.");
+      const message = err instanceof Error ? err.message : "Could not update password.";
+      toast.error(/expired|invalid/i.test(message) ? "This reset link has expired. Request a new one." : message);
+      if (/expired|invalid/i.test(message)) setExpired(true);
     } finally {
       setLoading(false);
     }
@@ -94,7 +104,14 @@ export default function ResetPasswordPage() {
         <CardDescription>Choose a strong password for your {brand.name} account</CardDescription>
       </CardHeader>
       <CardContent>
-        {!ready ? (
+        {expired && !ready ? (
+          <div className="space-y-4 text-center text-sm text-muted-foreground">
+            <p>This reset link is invalid or has expired.</p>
+            <Button asChild className="min-h-11 rounded-full">
+              <Link href="/forgot-password">Request a new link</Link>
+            </Button>
+          </div>
+        ) : !ready ? (
           <p className="text-center text-sm text-muted-foreground">
             Verifying your reset link… If this takes too long,{" "}
             <Link href="/forgot-password" className="font-medium text-primary hover:underline">
@@ -104,33 +121,24 @@ export default function ResetPasswordPage() {
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="rounded-xl"
-              />
-              {errors.password ? <p className="text-sm text-destructive">{errors.password}</p> : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                className="rounded-xl"
-              />
-              {errors.confirmPassword ? (
-                <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-              ) : null}
-            </div>
-            <Button type="submit" className="w-full rounded-full" disabled={loading}>
+            <PasswordField
+              id="password"
+              label="New password"
+              value={password}
+              onChange={setPassword}
+              autoComplete="new-password"
+              error={errors.password}
+              showRequirements
+            />
+            <PasswordField
+              id="confirmPassword"
+              label="Confirm password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+              error={errors.confirmPassword}
+            />
+            <Button type="submit" className="min-h-11 w-full rounded-full" disabled={loading}>
               {loading ? "Updating…" : "Update password"}
             </Button>
           </form>

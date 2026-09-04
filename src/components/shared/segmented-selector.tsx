@@ -31,6 +31,7 @@ export function SegmentedSelector<T extends string>({
         className
       )}
       role="radiogroup"
+      aria-label="Choose one option"
     >
       {options.map((option) => {
         const selected = value === option.value;

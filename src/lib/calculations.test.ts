@@ -25,6 +25,22 @@ describe("calculatePetAge", () => {
     expect(age.years).toBe(1);
     expect(age.months).toBe(6);
   });
+
+  it("never displays unknown age as zero months", () => {
+    const age = calculatePetAge({ birth_date: null, estimated_age_months: null, life_stage: "unknown" });
+    expect(age.label).toBe("Age unknown");
+    expect(age.label).not.toMatch(/0 mo/);
+  });
+
+  it("displays an explicit adult life stage", () => {
+    const age = calculatePetAge({
+      birth_date: null,
+      estimated_age_months: null,
+      life_stage: "adult",
+      species: "dog",
+    });
+    expect(age.label).toBe("Adult");
+  });
 });
 
 describe("vaccination logic", () => {

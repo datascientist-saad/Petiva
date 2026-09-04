@@ -1,36 +1,43 @@
 import { differenceInDays, differenceInMonths, differenceInYears, parseISO, startOfDay, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { formatAgeDisplay, type ApproximateLifeStage } from "@/lib/nutrition/life-stage";
 import type { CareTask, FoodUnit, MealLog, Pet, TaskCompletion, Vaccination, WeightRecord } from "@/types/database";
 
-export function calculatePetAge(pet: Pick<Pet, "birth_date" | "estimated_age_months">, now = new Date()): {
+export function calculatePetAge(
+  pet: Pick<Pet, "birth_date" | "estimated_age_months"> & {
+    species?: string | null;
+    life_stage?: ApproximateLifeStage | null;
+  },
+  now = new Date()
+): {
   years: number;
   months: number;
   label: string;
   totalMonths: number;
 } {
-  if (pet.birth_date) {
+  const display = formatAgeDisplay({
+    species: pet.species ?? undefined,
+    birthDate: pet.birth_date,
+    lifeStage: pet.life_stage,
+    estimatedAgeMonths: pet.estimated_age_months,
+    now,
+  });
+
+  if (pet.birth_date && display.totalMonths != null) {
     const birth = parseISO(pet.birth_date);
-    const years = differenceInYears(now, birth);
-    const months = differenceInMonths(now, birth) % 12;
-    const totalMonths = differenceInMonths(now, birth);
-    const label =
-      years <= 0
-        ? `${Math.max(months, 0)} mo`
-        : months === 0
-          ? `${years} ${years === 1 ? "year" : "years"}`
-          : `${years} ${years === 1 ? "year" : "years"}`;
-    return { years, months, label, totalMonths };
+    return {
+      years: differenceInYears(now, birth),
+      months: differenceInMonths(now, birth) % 12,
+      label: display.label,
+      totalMonths: display.totalMonths,
+    };
   }
 
-  const totalMonths = pet.estimated_age_months ?? 0;
-  const years = Math.floor(totalMonths / 12);
-  const months = totalMonths % 12;
-  const label =
-    years <= 0
-      ? `~${months} mo`
-      : months === 0
-        ? `~${years} ${years === 1 ? "year" : "years"}`
-        : `~${years} ${years === 1 ? "year" : "years"}`;
-  return { years, months, label, totalMonths };
+  return {
+    years: display.years ?? 0,
+    months: display.months ?? 0,
+    label: display.label,
+    totalMonths: display.totalMonths ?? 0,
+  };
 }
 
 export function daysUntilVaccination(nextDueDate: string | null | undefined, now = new Date()): number | null {

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
+import { SkipLink } from "@/components/layout/skip-link";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -87,6 +88,7 @@ export function AppShell({ children, petSelector }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      <SkipLink />
       <div className="mx-auto flex min-h-screen max-w-7xl">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card/50 p-5 md:flex">
           <Logo className="mb-2" showTagline />
@@ -129,7 +131,9 @@ export function AppShell({ children, petSelector }: AppShellProps) {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">{children}</main>
+          <main id="main-content" className="flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8">
+            {children}
+          </main>
 
           <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-2 py-2 backdrop-blur md:hidden">
             <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
@@ -152,7 +156,7 @@ export function AppShell({ children, petSelector }: AppShellProps) {
                       moreActive ? "bg-primary/12 text-primary" : "text-muted-foreground"
                     )}
                   >
-                    <MoreHorizontal className="size-5" />
+                    <MoreHorizontal className="size-5" aria-hidden />
                     <span>{t(locale, "nav.more")}</span>
                   </Button>
                 </SheetTrigger>

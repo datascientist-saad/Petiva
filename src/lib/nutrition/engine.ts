@@ -15,7 +15,7 @@ export type NutritionPlanResult =
   | { engine: "bird"; result: BirdNutritionResult }
   | { engine: "unsupported"; message: string };
 
-export const NUTRITION_ENGINE_VERSION = "2026.08.31";
+export { NUTRITION_ENGINE_VERSION } from "./constants";
 
 export function resolveNutritionEngine(species: string): NutritionEngineType {
   const def = getSpeciesDefinition(species);
