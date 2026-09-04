@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { sanitizeNextPath } from "@/lib/auth-redirect";
+import { isAuthPath, isPrivateAppPath, isPublicPath } from "@/lib/public-routes";
 import { supabasePublicDefaults } from "@/lib/supabase/public-config";
 
 export async function updateSession(request: NextRequest) {
@@ -32,34 +34,6 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isAuthRoute =
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/signup") ||
-    pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password");
-  const isPublic =
-    pathname === "/" ||
-    pathname.startsWith("/privacy") ||
-    pathname.startsWith("/terms") ||
-    pathname.startsWith("/ai-disclaimer") ||
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/invite");
-
-  const isAppRoute =
-    pathname.startsWith("/home") ||
-    pathname.startsWith("/health") ||
-    pathname.startsWith("/care") ||
-    pathname.startsWith("/care-plan") ||
-    pathname.startsWith("/reports") ||
-    pathname.startsWith("/upgrade") ||
-    pathname.startsWith("/ai") ||
-    pathname.startsWith("/profile") ||
-    pathname.startsWith("/settings") ||
-    pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/setup") ||
-    pathname.startsWith("/pets") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/notifications");
 
   if (user && pathname === "/") {
     const redirectUrl = request.nextUrl.clone();
@@ -67,27 +41,29 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (!user && isAppRoute) {
+  if (!user && isPrivateAppPath(pathname)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && isAuthRoute) {
+  if (user && isAuthPath(pathname) && pathname !== "/reset-password") {
     const redirectUrl = request.nextUrl.clone();
-    const next = request.nextUrl.searchParams.get("next");
-    if (next?.startsWith("/invite/") || next === "/setup/complete") {
-      redirectUrl.pathname = next;
-      redirectUrl.searchParams.delete("next");
-    } else {
-      redirectUrl.pathname = "/home";
-    }
+    const requested = request.nextUrl.searchParams.get("next");
+    const next = sanitizeNextPath(requested);
+    redirectUrl.pathname =
+      requested === "/setup/complete" || next.startsWith("/invite/") || next === "/setup/complete"
+        ? requested === "/setup/complete"
+          ? "/setup/complete"
+          : next
+        : "/home";
+    redirectUrl.searchParams.delete("next");
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (!user && !isPublic && !isAuthRoute && pathname.startsWith("/api") === false) {
-    // allow marketing assets
+  if (!user && !isPublicPath(pathname) && !isAuthPath(pathname) && !pathname.startsWith("/api")) {
+    // Public marketing assets and generated metadata stay reachable.
   }
 
   return supabaseResponse;

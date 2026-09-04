@@ -5,40 +5,58 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { PasswordField } from "@/components/auth/password-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { AnalyticsEvents } from "@/lib/analytics/events";
+import { trackEvent } from "@/lib/analytics/track";
 import { hasOnboardingDraft } from "@/lib/onboarding-draft";
-import { resolvePostAuthPath } from "@/lib/auth-redirect";
+import { resolvePostAuthPath, sanitizeNextPath } from "@/lib/auth-redirect";
 import { brand } from "@/lib/brand";
 import { createClient } from "@/lib/supabase/client";
 import { signUpSchema } from "@/lib/validations";
 
+function friendlyAuthError(message: string): string {
+  if (/already registered|already exists|user already/i.test(message)) {
+    return "An account with this email already exists. Try signing in.";
+  }
+  if (/rate limit|too many/i.test(message)) {
+    return "Too many attempts. Please wait a minute and try again.";
+  }
+  if (/password/i.test(message) && /weak|short|least/i.test(message)) {
+    return "Please choose a stronger password with at least 8 characters.";
+  }
+  return message;
+}
+
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const searchNext = searchParams.get("next");
-  const [next, setNext] = useState(searchNext ?? "/onboarding");
+  const searchNext = sanitizeNextPath(searchParams.get("next"));
+  const [next, setNext] = useState(searchNext);
 
   useEffect(() => {
-    if (!searchNext && hasOnboardingDraft()) {
+    trackEvent(AnalyticsEvents.SIGNUP_STARTED, { source: "signup_page" });
+    if (!searchParams.get("next") && hasOnboardingDraft()) {
       setNext("/setup/complete");
     }
-  }, [searchNext]);
+  }, [searchParams]);
 
-  const loginHref =
-    next === "/setup/complete" ? "/login?next=%2Fsetup%2Fcomplete" : "/login";
+  const loginHref = `/login?next=${encodeURIComponent(next)}`;
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrors({});
+    setFormError("");
 
     const parsed = signUpSchema.safeParse({ fullName, email, password });
     if (!parsed.success) {
@@ -48,6 +66,8 @@ export default function SignupForm() {
         fieldErrors[key] = issue.message;
       });
       setErrors(fieldErrors);
+      const first = Object.keys(fieldErrors)[0];
+      if (first) document.getElementById(first)?.focus();
       return;
     }
 
@@ -66,17 +86,29 @@ export default function SignupForm() {
 
       if (error) throw error;
 
+      trackEvent(AnalyticsEvents.SIGNUP_COMPLETED, { method: "email" });
+
       if (data.session) {
         toast.success(`Welcome to ${brand.name}!`);
-        router.replace(hasOnboardingDraft() ? "/setup/complete" : resolvePostAuthPath(next, { hasNoPets: true, hasIncompleteOnboarding: true, hasPendingOnboardingDraft: hasOnboardingDraft() }));
+        router.replace(
+          hasOnboardingDraft()
+            ? "/setup/complete"
+            : resolvePostAuthPath(next, {
+                hasNoPets: true,
+                hasIncompleteOnboarding: true,
+                hasPendingOnboardingDraft: hasOnboardingDraft(),
+              })
+        );
         router.refresh();
         return;
       }
 
       toast.success("Check your email to confirm your account.");
-      router.replace("/login");
+      router.replace(`/verify-email?email=${encodeURIComponent(parsed.data.email)}&next=${encodeURIComponent(next)}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not create account.");
+      const message = friendlyAuthError(err instanceof Error ? err.message : "Could not create account.");
+      setFormError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -95,7 +127,7 @@ export default function SignupForm() {
           <span className="text-xs text-muted-foreground">or email</span>
           <Separator className="flex-1" />
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="space-y-2">
             <Label htmlFor="fullName">Full name</Label>
             <Input
@@ -103,10 +135,16 @@ export default function SignupForm() {
               autoComplete="name"
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
-              className="rounded-xl"
+              className="min-h-11 rounded-xl"
               placeholder="Alex Johnson"
+              aria-invalid={Boolean(errors.fullName)}
+              aria-describedby={errors.fullName ? "fullName-error" : undefined}
             />
-            {errors.fullName ? <p className="text-sm text-destructive">{errors.fullName}</p> : null}
+            {errors.fullName ? (
+              <p id="fullName-error" className="text-sm text-destructive" role="alert">
+                {errors.fullName}
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -116,34 +154,53 @@ export default function SignupForm() {
               autoComplete="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="rounded-xl"
+              className="min-h-11 rounded-xl"
               placeholder="you@example.com"
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
             />
-            {errors.email ? <p className="text-sm text-destructive">{errors.email}</p> : null}
+            {errors.email ? (
+              <p id="email-error" className="text-sm text-destructive" role="alert">
+                {errors.email}
+              </p>
+            ) : null}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="rounded-xl"
-              placeholder="At least 8 characters"
-            />
-            {errors.password ? <p className="text-sm text-destructive">{errors.password}</p> : null}
-          </div>
-          <Button type="submit" className="w-full rounded-full" disabled={loading}>
+          <PasswordField
+            id="password"
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            autoComplete="new-password"
+            error={errors.password}
+            showRequirements
+          />
+          {formError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          <Button type="submit" className="min-h-11 w-full rounded-full" disabled={loading}>
             {loading ? "Creating account…" : "Create account"}
           </Button>
+          <p className="text-center text-xs leading-relaxed text-muted-foreground">
+            By creating an account, you agree to Animivo’s{" "}
+            <Link href="/terms" className="font-medium text-primary hover:underline">
+              Terms of Use
+            </Link>{" "}
+            and acknowledge the{" "}
+            <Link href="/privacy" className="font-medium text-primary hover:underline">
+              Privacy Policy
+            </Link>{" "}
+            and{" "}
+            <Link href="/ai-disclaimer" className="font-medium text-primary hover:underline">
+              AI Disclaimer
+            </Link>
+            .
+          </p>
         </form>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link
-            href={next.startsWith("/invite/") ? `/login?next=${encodeURIComponent(next)}` : loginHref}
-            className="font-medium text-primary hover:underline"
-          >
+          <Link href={loginHref} className="font-medium text-primary hover:underline">
             Sign in
           </Link>
         </p>

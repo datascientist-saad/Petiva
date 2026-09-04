@@ -32,19 +32,22 @@ export class DietPlanService {
             ? "wet"
             : "dry";
 
-    const ageMonths =
-      pet.estimated_age_months ??
-      (pet.birth_date
-        ? Math.max(
-            0,
-            (new Date().getFullYear() - new Date(pet.birth_date).getFullYear()) * 12
-          )
-        : 24);
+    const ageMonths = pet.birth_date
+      ? Math.max(
+          0,
+          (new Date().getFullYear() - new Date(pet.birth_date).getFullYear()) * 12 +
+            (new Date().getMonth() - new Date(pet.birth_date).getMonth())
+        )
+      : pet.estimated_age_months && pet.estimated_age_months > 0
+        ? pet.estimated_age_months
+        : null;
 
     return {
       species: pet.species,
       weightKg: Number(pet.weight_kg),
       ageMonths,
+      lifeStage: pet.life_stage,
+      birthDate: pet.birth_date,
       neutered: pet.neutered,
       activityLevel: activity as DietCalculationInput["activityLevel"],
       bodyCondition: pet.body_condition ?? "unsure",

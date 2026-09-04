@@ -20,6 +20,21 @@ describe("bird nutrition calculator", () => {
     expect(result.personalBaselineGrams).toBe(35);
   });
 
+  it("does not reuse dog or cat calorie formulas", () => {
+    const result = calculateBirdNutrition({
+      birdSpecies: "Cockatiel",
+      weightGrams: 350,
+      ageMonths: 24,
+      activityLevel: "moderate",
+    });
+    expect(result.calorieCalculationAvailable).toBe(false);
+    expect(result.feedingQuantityAvailable).toBe(false);
+    expect(result).not.toHaveProperty("merKcal");
+    expect(result).not.toHaveProperty("rerKcal");
+    expect(result.limitations.join(" ")).toMatch(/calorie or feeding-quantity calculation is not yet available/i);
+    expect(result.avianVetDisclaimer).toMatch(/avian veterinarian/i);
+  });
+
   it("flags avian vet review for egg laying", () => {
     const result = calculateBirdNutrition({
       birdSpecies: "Cockatiel",

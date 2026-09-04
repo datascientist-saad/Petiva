@@ -4,7 +4,7 @@
 
 The following outputs are produced by versioned code and structured reference data — not by large language models:
 
-- Cat and dog daily energy estimates (RER/MER formulas in `src/lib/diet-calculations.ts`)
+- Cat and dog daily energy estimates (RER/MER formulas in `src/lib/nutrition/mammal-calculator.ts`)
 - Cat and dog portion calculations
 - Bird diet composition guidance (`src/lib/nutrition/bird-reference-data.ts`)
 - Mixed-feeding validation

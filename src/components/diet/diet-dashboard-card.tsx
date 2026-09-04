@@ -80,17 +80,32 @@ export function DietDashboardCard() {
             {result.suggestedSeedPercentMax}% · Greens ≥{result.suggestedVegetablePercentMin}%
           </p>
           <p className="text-sm">{result.waterSchedule}</p>
-          {result.isGeneralGuidance ? (
-            <p className="text-xs text-muted-foreground">
-              General guidance — confirm portions with an avian veterinarian.
-            </p>
-          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Personalized calorie or feeding-quantity calculation is not available for birds yet.
+            Confirm amounts with an avian veterinarian.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   const mammal = result as DietCalculationResult;
+  if (mammal.recommendationBlocked) {
+    return (
+      <Card className="rounded-2xl border-warning/40 bg-warning/10 shadow-sm">
+        <CardContent className="space-y-3 p-5">
+          <p className="font-medium">Veterinary review recommended</p>
+          <p className="text-sm text-muted-foreground">
+            A routine calorie plan was not generated for this pet. Ask a veterinarian for
+            individualized feeding amounts.
+          </p>
+          <Button asChild size="sm" variant="secondary" className="rounded-xl">
+            <Link href="/health/diet">View details</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
   const total = mammal.mealSchedule?.length ?? 0;
   const nextMeal = mammal.mealSchedule?.find((_, i) => i >= completed);
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;

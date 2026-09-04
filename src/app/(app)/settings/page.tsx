@@ -99,15 +99,11 @@ export default function SettingsPage() {
 
   async function deleteAccount() {
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      for (const pet of pets.filter((p) => p.role === "owner")) {
-        await supabase.from("pets").delete().eq("id", pet.id);
+      const res = await fetch("/api/account/delete", { method: "POST" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || "Could not delete account.");
       }
-      await supabase.auth.signOut();
       toast.success("Account deleted. We're sorry to see you go.");
       router.push("/");
       router.refresh();

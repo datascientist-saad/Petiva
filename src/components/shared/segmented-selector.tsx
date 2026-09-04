@@ -12,6 +12,8 @@ interface SegmentedSelectorProps<T extends string> {
   onChange: (value: T) => void;
   className?: string;
   columns?: 2 | 3 | 4;
+  id?: string;
+  ariaLabel?: string;
 }
 
 export function SegmentedSelector<T extends string>({
@@ -20,9 +22,12 @@ export function SegmentedSelector<T extends string>({
   onChange,
   className,
   columns = 2,
+  id,
+  ariaLabel = "Choose one option",
 }: SegmentedSelectorProps<T>) {
   return (
     <div
+      id={id}
       className={cn(
         "grid gap-2",
         columns === 2 && "grid-cols-1 sm:grid-cols-2",
@@ -31,6 +36,8 @@ export function SegmentedSelector<T extends string>({
         className
       )}
       role="radiogroup"
+      aria-label={ariaLabel}
+      tabIndex={-1}
     >
       {options.map((option) => {
         const selected = value === option.value;
@@ -42,7 +49,7 @@ export function SegmentedSelector<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "rounded-2xl border px-4 py-3 text-left transition-all",
+              "min-h-11 rounded-2xl border px-4 py-3 text-left transition-all",
               selected
                 ? "border-primary bg-primary/10 text-foreground shadow-sm"
                 : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:bg-secondary/60"

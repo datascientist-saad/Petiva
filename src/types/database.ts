@@ -5,6 +5,7 @@ export type ActivityLevel = "low" | "moderate" | "high";
 export type ExtendedActivityLevel = "low" | "moderate" | "active" | "very_active";
 export type BodyCondition = "underweight" | "ideal" | "overweight" | "unsure";
 export type DietGoal = "maintain" | "lose" | "gain" | "improve";
+export type LifeStage = "baby" | "young" | "adult" | "senior" | "unknown";
 export type WeightUnit = "kg" | "lb" | "g";
 export type FoodType = "dry" | "wet" | "mixed" | "raw" | "other";
 export type FoodUnit = "grams" | "cans" | "portions";
@@ -58,6 +59,7 @@ export interface Pet {
   breed: string | null;
   birth_date: string | null;
   estimated_age_months: number | null;
+  life_stage: LifeStage | null;
   sex: Sex | null;
   weight_kg: number | null;
   weight_unit: WeightUnit;

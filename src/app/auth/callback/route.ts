@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { resolvePostAuthPath } from "@/lib/auth-redirect";
+import { resolvePostAuthPath, sanitizeNextPath } from "@/lib/auth-redirect";
 import { createClient } from "@/lib/supabase/server";
 import { PetService } from "@/services/pet-service";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const nextParam = searchParams.get("next");
+  const nextParam = sanitizeNextPath(searchParams.get("next"));
 
   if (code) {
     const supabase = await createClient();
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
       const destination = resolvePostAuthPath(nextParam, {
         hasNoPets,
         hasIncompleteOnboarding,
+        hasPendingOnboardingDraft: request.headers.get("cookie")?.includes("animivo_onboarding_pending=1"),
       });
 
       return NextResponse.redirect(`${origin}${destination}`);

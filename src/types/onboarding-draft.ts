@@ -1,8 +1,10 @@
 import type { DietCalculationResult } from "@/lib/diet-calculations";
+import type { ApproximateLifeStage } from "@/lib/nutrition/life-stage";
 import type { BirdNutritionResult } from "@/lib/nutrition/bird-calculator";
 import type { SupportedSpeciesId } from "@/lib/species/registry";
 
-export type OnboardingDraftStep = "welcome" | "basics" | "body" | "diet" | "preview";
+export type OnboardingDraftStep = "basics" | "body" | "diet" | "preview";
+export type FoodEnergyUnit = "per_100g" | "per_cup" | "per_can" | "per_serving";
 
 export interface BirdSpeciesProfile {
   bird_species: string;
@@ -21,7 +23,7 @@ export interface BirdSpeciesProfile {
 }
 
 export interface OnboardingDraftData {
-  version: 1;
+  version: 2;
   step: OnboardingDraftStep;
   stepIndex: number;
   updatedAt: string;
@@ -32,6 +34,7 @@ export interface OnboardingDraftData {
   estimated_age_years: string;
   estimated_age_months: string;
   use_approximate_age: boolean;
+  life_stage: ApproximateLifeStage | "";
   sex: "male" | "female" | "unknown" | "";
   weight_value: string;
   weight_unit: "kg" | "lb" | "g";
@@ -44,6 +47,7 @@ export interface OnboardingDraftData {
   food_product: string;
   calories_per_100g: string;
   calories_per_serving: string;
+  calorie_unit: FoodEnergyUnit | "";
   mixed_dry_percent: string;
   allergies: string;
   foods_to_avoid: string;
@@ -55,8 +59,10 @@ export interface OnboardingDraftData {
   diet_preview?: DietCalculationResult | BirdNutritionResult | null;
 }
 
-export const ONBOARDING_DRAFT_STORAGE_KEY = "animivo_onboarding_draft_v1";
+export const ONBOARDING_DRAFT_STORAGE_KEY = "animivo_onboarding_draft_v2";
+export const ONBOARDING_DRAFT_LEGACY_KEY = "animivo_onboarding_draft_v1";
 export const ONBOARDING_TRANSFER_FLAG_KEY = "animivo_onboarding_transferred";
+export const ONBOARDING_TRANSFER_LOCK_KEY = "animivo_onboarding_transfer_lock";
 
 export const HEALTH_CONDITION_OPTIONS = [
   "Arthritis",
@@ -73,8 +79,8 @@ export const HEALTH_CONDITION_OPTIONS = [
 ] as const;
 
 export const initialOnboardingDraft = (): OnboardingDraftData => ({
-  version: 1,
-  step: "welcome",
+  version: 2,
+  step: "basics",
   stepIndex: 0,
   updatedAt: new Date().toISOString(),
   name: "",
@@ -84,6 +90,7 @@ export const initialOnboardingDraft = (): OnboardingDraftData => ({
   estimated_age_years: "",
   estimated_age_months: "",
   use_approximate_age: false,
+  life_stage: "",
   sex: "",
   weight_value: "",
   weight_unit: "kg",
@@ -96,6 +103,7 @@ export const initialOnboardingDraft = (): OnboardingDraftData => ({
   food_product: "",
   calories_per_100g: "",
   calories_per_serving: "",
+  calorie_unit: "",
   mixed_dry_percent: "50",
   allergies: "",
   foods_to_avoid: "",

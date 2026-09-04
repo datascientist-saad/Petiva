@@ -1,5 +1,6 @@
 import { Logo } from "@/components/brand/logo";
 import Link from "next/link";
+import { SkipLink } from "@/components/layout/skip-link";
 import { brand } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ export function MarketingShell({ children, variant = "default" }: MarketingShell
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
+      <SkipLink />
       <header
         className={cn(
           "mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between px-4 md:px-8",
@@ -35,7 +37,9 @@ export function MarketingShell({ children, variant = "default" }: MarketingShell
           </Button>
         </div>
       </header>
-      <main className={cn("flex min-h-0 flex-1 flex-col")}>{children}</main>
+      <main id="main-content" className={cn("flex min-h-0 flex-1 flex-col")}>
+        {children}
+      </main>
       <footer
         className={cn(
           "mt-auto shrink-0 border-t border-border px-4 md:px-8",
@@ -49,15 +53,13 @@ export function MarketingShell({ children, variant = "default" }: MarketingShell
           )}
         >
           {!isOnboarding ? <Logo /> : null}
-          {isOnboarding ? (
-            <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
-              {onboardingFooterLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="transition-colors hover:text-foreground">
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          ) : null}
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+            {onboardingFooterLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="min-h-11 inline-flex items-center transition-colors hover:text-foreground">
+                {link.label}
+              </Link>
+            ))}
+          </nav>
           <p className={cn(isOnboarding && "mx-auto leading-relaxed")}>
             © {new Date().getFullYear()} {brand.name}. Made with care for pets and their people.
           </p>

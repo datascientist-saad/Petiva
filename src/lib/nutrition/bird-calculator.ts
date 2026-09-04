@@ -18,6 +18,8 @@ export interface BirdNutritionResult {
   engineVersion: string;
   referenceVersion: string;
   isGeneralGuidance: boolean;
+  calorieCalculationAvailable: false;
+  feedingQuantityAvailable: false;
   suggestedPelletPercent: { min: number; max: number };
   suggestedSeedPercentMax: number;
   suggestedVegetablePercentMin: number;
@@ -56,11 +58,13 @@ export function calculateBirdNutrition(input: BirdNutritionInput): BirdNutrition
     influencingFactors.push(`Current weight: ${input.weightGrams} g`);
   }
 
-  if (input.ageMonths < 6) {
+  if (input.ageMonths > 0 && input.ageMonths < 6) {
     influencingFactors.push("Young bird — growth needs may differ");
     limitations.push("Growing birds may need species-specific veterinary guidance.");
   } else if (input.ageMonths >= 84) {
     influencingFactors.push("Senior life stage");
+  } else if (input.ageMonths <= 0) {
+    influencingFactors.push("Age unknown — no growth-stage feeding quantity was assumed");
   }
 
   influencingFactors.push(`Activity: ${input.activityLevel}`);
@@ -92,17 +96,23 @@ export function calculateBirdNutrition(input: BirdNutritionInput): BirdNutrition
   const meals =
     input.activityLevel === "very_active" || input.activityLevel === "active" ? 3 : ref.mealsPerDay;
 
+  limitations.push(
+    "A personalized calorie or feeding-quantity calculation is not yet available for birds."
+  );
+
   return {
     engineVersion: "bird-v1",
     referenceVersion: BIRD_NUTRITION_REFERENCE_VERSION,
-    isGeneralGuidance: input.birdSpecies === "Other companion bird" || limitations.length > 0,
+    calorieCalculationAvailable: false,
+    feedingQuantityAvailable: false,
+    isGeneralGuidance: true,
     suggestedPelletPercent: { min: ref.pelletPercentMin, max: ref.pelletPercentMax },
     suggestedSeedPercentMax: ref.seedPercentMax,
     suggestedVegetablePercentMin: ref.vegetablePercentMin,
     suggestedFruitPercentMax: ref.fruitPercentMax,
     treatGuidance: ref.treatGuidance,
     feedingSchedule: [
-      { label: "Morning", detail: `Measured portion — ${meals} meals/day suggested` },
+      { label: "Morning", detail: `Offer a measured portion when your avian veterinarian has set an amount. Typical care pattern: ${meals} feeding times/day.` },
       { label: "Afternoon", detail: "Fresh vegetables/greens where appropriate" },
       { label: "Evening", detail: "Remove uneaten fresh food within a few hours" },
     ],
@@ -114,7 +124,7 @@ export function calculateBirdNutrition(input: BirdNutritionInput): BirdNutrition
     unsafeFoodWarnings: ref.unsafeFoods,
     influencingFactors,
     limitations,
-    avianVetDisclaimer: ref.disclaimer,
+    avianVetDisclaimer: `${ref.disclaimer} Ask an avian veterinarian for dietary quantities. Animivo can help you track weight, food patterns, and care tasks in the meantime.`,
     elevatedVetWarning,
   };
 }
