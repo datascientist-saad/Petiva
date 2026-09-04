@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextPetWriteAttempt } from "./pet-write";
+import { nextPetWriteAttempt, stripOptionalPetInsertColumns } from "./pet-write";
 
 describe("nextPetWriteAttempt", () => {
   const base = {
@@ -30,6 +30,15 @@ describe("nextPetWriteAttempt", () => {
     expect(next?.name).toBe("Kiwi");
   });
 
+  it("omits life_stage from Postgres 42703 errors (column pets.life_stage does not exist)", () => {
+    const next = nextPetWriteAttempt(base, {
+      code: "42703",
+      message: "column pets.life_stage does not exist",
+    });
+    expect(next && "life_stage" in next).toBe(false);
+    expect(next?.species).toBe("bird");
+  });
+
   it("does not retry a leftover cat/dog species check", () => {
     const next = nextPetWriteAttempt(base, {
       message: "new row for relation \"pets\" violates check constraint \"pets_species_check\"",
@@ -42,5 +51,20 @@ describe("nextPetWriteAttempt", () => {
       message: "new row violates check constraint pets_sex_check",
     });
     expect(next?.sex).toBeNull();
+  });
+});
+
+describe("stripOptionalPetInsertColumns", () => {
+  it("keeps core pet fields and defers life_stage so inserts work before that migration", () => {
+    const { core, extra } = stripOptionalPetInsertColumns({
+      name: "Luna",
+      species: "dog",
+      owner_id: "user-1",
+      weight_unit: "kg",
+      life_stage: "adult",
+    });
+    expect(core).toMatchObject({ name: "Luna", species: "dog", weight_unit: "kg" });
+    expect(core).not.toHaveProperty("life_stage");
+    expect(extra.life_stage).toBe("adult");
   });
 });

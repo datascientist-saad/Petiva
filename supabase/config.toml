@@ -1,5 +1,8 @@
 # For detailed configuration reference documentation, visit:
 # https://supabase.com/docs/guides/local-development/cli/config
+# Hosted Animivo project ref: tqfxsxwqxidcsmlstbjf
+# If Database → Migrations is empty, run supabase/remote_stamp_and_repair.sql
+# in the SQL editor (hand-applied SQL is not recorded as CLI history).
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
 project_id = "agent"

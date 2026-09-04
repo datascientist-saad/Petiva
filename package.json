@@ -9,7 +9,9 @@
     "lint": "eslint src --max-warnings 100",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "db:link": "npx supabase link --project-ref tqfxsxwqxidcsmlstbjf",
+    "db:push": "npx supabase db push"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.23",
